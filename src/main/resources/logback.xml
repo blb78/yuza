@@ -1,0 +1,15 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <Pattern>%d{HH:mm:ss.SSS}[%highlight(%-5level)][%-10.10thread][%-20.20logger{0}] %msg %xException%n</Pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.skillogs.yuza" level="INFO"/>
+
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
