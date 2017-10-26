@@ -22,6 +22,7 @@ public class User {
     private boolean enabled = true;
     @JsonIgnore
     private boolean locked = false;
+    @JsonIgnore
     private long createdAt  = System.currentTimeMillis();
 
     public String getId() {
