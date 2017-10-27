@@ -2,11 +2,14 @@ package com.skillogs.yuza.net.http;
 
 
 import com.skillogs.yuza.domain.User;
+import com.skillogs.yuza.net.exception.ApiException;
+
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping(UserController.URI)
@@ -23,7 +26,7 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         if (repository.countByEmail(user.getEmail())>0){
-            throw new IllegalArgumentException("Email Already Exist !");
+            throw new ApiException("400","Unique Constraint Exception");
         }
         return repository.save(user);
     }
@@ -42,8 +45,11 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User findUser(@PathVariable String id){
-        return repository.findById(id);
+    public User findUser(@PathVariable String id)  {
+        User user = repository.findById(id);
+        if (user == null) throw new ApiException("404","Not Found");
+
+        return user;
     }
 
     public static class UserCredentials {

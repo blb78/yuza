@@ -1,14 +1,24 @@
 package com.skillogs.yuza.net.http;
 
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
+import com.skillogs.yuza.net.exception.ApiException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.servlet.ModelAndView;
+
 
 @ControllerAdvice
 class GlobalControllerExceptionHandler {
-    @ResponseStatus(value=HttpStatus.BAD_REQUEST, reason="Email Already Exist !")
-    @ExceptionHandler(IllegalArgumentException.class)
-    public void handleConflict() { }
+
+
+    @ExceptionHandler(ApiException.class)
+    public ModelAndView handleApiException(ApiException ex) {
+
+        ModelAndView model = new ModelAndView("error/generic_error");
+        model.addObject("errCode", ex.getErrCode());
+        model.addObject("errMsg", ex.getErrMsg());
+
+        return model;
+
+    }
+
 }
