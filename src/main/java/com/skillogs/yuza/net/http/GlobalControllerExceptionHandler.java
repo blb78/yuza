@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 class GlobalControllerExceptionHandler {
     @ResponseStatus(value=HttpStatus.BAD_REQUEST, reason="Email Already Exist !")
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public void handleConflict() {
-        // Nothing to do
-    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public void handleConflict() { }
 }

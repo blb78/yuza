@@ -4,7 +4,6 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,7 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         if (repository.countByEmail(user.getEmail())>0){
-            throw new DataIntegrityViolationException("Email already exist !");
+            throw new IllegalArgumentException("Email Already Exist !");
         }
         return repository.save(user);
     }
