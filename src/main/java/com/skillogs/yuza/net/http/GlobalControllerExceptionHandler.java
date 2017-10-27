@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 class GlobalControllerExceptionHandler {
 
-
     @ExceptionHandler(ApiConflictException.class)
     @ResponseStatus(value= HttpStatus.CONFLICT, reason="Email already exist")
     public void ApiEmailAlreadyExistException()  {  }

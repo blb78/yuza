@@ -16,6 +16,7 @@ public class User {
     private String password;
     private String firstName;
     private String lastName;
+    private long birthday;
     @JsonIgnore
     private String picture;
     @JsonIgnore
@@ -93,6 +94,15 @@ public class User {
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
     }
+
+    public long getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(long birthday) {
+        this.birthday = birthday;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -100,6 +110,7 @@ public class User {
                 ", email=" + email +
                 ", firstName=" + firstName +
                 ", lastName=" + lastName +
+                ", birthday=" + lastName +
                 '}';
     }
 }
