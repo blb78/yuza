@@ -4,12 +4,14 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 
-import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 
 @RestController
@@ -43,16 +45,17 @@ public class UserController {
     }
 
     @PostMapping("/authenticate")
-    public User authenticate(@RequestBody UserCredentials user){
-        return repository.findByEmailAndPassword(user.getEmail(),user.getPassword());
+    public ResponseEntity<User> authenticate(@RequestBody UserCredentials user){
+        return Optional.ofNullable(repository.findByEmailAndPassword(user.getEmail(),user.getPassword()))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
-    public User findUser(@PathVariable String id)  {
-        User user = repository.findById(id);
-        if (user == null) throw new ApiNotFoundException();
-
-        return user;
+    public ResponseEntity<User> findUser(@PathVariable String id)  {
+        return Optional.ofNullable(repository.findById(id))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
