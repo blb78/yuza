@@ -1,0 +1,9 @@
+{
+  "build": {
+    "type": "maven",
+    "goal": "install"
+  },
+  "deploy": {
+    "jarName": "target/yuza.jar"
+  }
+}

@@ -1,0 +1,74 @@
+# Need to be define in Gitlab-ci :
+# - CLEVER_APP_ID_PROD
+# - CLEVER_APP_ID_PRERPOD
+# - CLEVER_APP_ID_ITG
+# - CLEVER_TOKEN
+# - CLEVER_SECRET
+#
+# To perform a deployment on production, we need to git `tag` a release
+
+stages:
+    - build
+    - test
+    - deploy
+
+mvn-build:
+    stage: build
+    image: maven:3.5.0-jdk-9-slim
+
+    script:
+        - mvn compile
+
+mvn-test:
+    stage: test
+    image: maven:3.5.0-jdk-9-slim
+
+    script:
+        - mvn test
+
+clever-deploy-itg:
+    stage: deploy
+    before_script:
+        - apt install git
+        - git checkout develop
+        - git pull || true
+        - git remote remove clever || true
+        - git remote add clever https://$CLEVER_TOKEN:$CLEVER_SECRET@push-par-clevercloud-customers.services.clever-cloud.com/$CLEVER_APP_ID_ITG.git
+    script:
+        - git push --verbose clever develop:master 2>&1 | grep -e 'remote:' -e '->'
+    environment:
+        name: itg
+    only:
+      - develop
+
+clever-deploy-preprod:
+    stage: deploy
+    script:
+        - apt update
+        - apt install git
+        - git remote remove clever || true
+        - git remote add clever https://$CLEVER_TOKEN:$CLEVER_SECRET@push-par-clevercloud-customers.services.clever-cloud.com/$CLEVER_APP_ID_PRP.git
+        - git checkout master
+        - git pull
+        - git push --verbose clever master 2>&1 | grep -e 'remote:' -e '->'
+    environment:
+        name: preprod
+    only:
+      - master
+
+clever-deploy-prod:
+    stage: deploy
+    before_script:
+        - apt install git
+        - git checkout release
+        - git pull || true
+        - git remote remove clever || true
+        - git remote add clever https://$CLEVER_TOKEN:$CLEVER_SECRET@push-par-clevercloud-customers.services.clever-cloud.com/$CLEVER_APP_ID_PROD.git
+    script:
+        - git push --verbose clever release:master 2>&1 | grep -e 'remote:' -e '->'
+    environment:
+        name: prod
+    when: manual
+    only:
+      - release
+      - tags

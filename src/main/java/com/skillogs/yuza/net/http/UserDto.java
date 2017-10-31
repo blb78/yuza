@@ -1,14 +1,9 @@
-package com.skillogs.yuza.domain;
-
+package com.skillogs.yuza.net.http;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-
-
-@Document
-public class User {
+public class UserDto {
     @Id
     private String id;
     private String email;
@@ -31,7 +26,10 @@ public class User {
     public String getId() {
         return id;
     }
-    public void setId(String id) {this.id = id; }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getEmail() {
         return email;
@@ -65,6 +63,30 @@ public class User {
         this.lastName = lastName;
     }
 
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public long getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(long birthday) {
+        this.birthday = birthday;
+    }
+
     public String getPicture() {
         return picture;
     }
@@ -95,42 +117,5 @@ public class User {
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public long getBirthday() {
-        return birthday;
-    }
-
-    public void setBirthday(long birthday) {
-        this.birthday = birthday;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", email=" + email +
-                ", firstName=" + firstName +
-                ", lastName=" + lastName +
-                ", birthday=" + lastName +
-                ", city=" + city +
-                ", country=" + country +
-                '}';
     }
 }
