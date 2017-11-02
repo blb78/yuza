@@ -8,6 +8,7 @@ import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,11 @@ public class UserController {
         this.repository = repository;
     }
 
+    @GetMapping
+    public Page<User> findAll(Pageable pageable){
+        return repository.findAll(pageable);
+    }
+
     @PostMapping
     public User createUser(@RequestBody User user)  {
 
@@ -35,13 +41,32 @@ public class UserController {
 
         return repository.save(user);
     }
-    @PutMapping("/{id}")
-    public User updateUser(@RequestBody User user){
-        return repository.save(user);
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> findUser(@PathVariable String id)  {
+        return Optional.ofNullable(repository.findById(id))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
-    @GetMapping
-    public Page<User> findAll(Pageable pageable){
-        return repository.findAll(pageable);
+
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user){
+
+        User currentUser = repository.findById(id);
+
+        if (currentUser == null){
+            return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
+        }
+        return Optional.ofNullable(repository.save(user))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public void  deleteUser(@PathVariable String id)  {
+
+        User user = repository.findById(id);
+        repository.delete(user);
     }
 
     @PostMapping("/authenticate")
@@ -51,17 +76,7 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> findUser(@PathVariable String id)  {
-        return Optional.ofNullable(repository.findById(id))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    @DeleteMapping("/{id}")
-    public void  deleteUser(@PathVariable String id)  {
-        User user = repository.findById(id);
-        repository.delete(user);
-    }
+
 
 
 
