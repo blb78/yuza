@@ -35,7 +35,7 @@ public class UserController {
 
         return repository.save(user);
     }
-    @PutMapping
+    @PutMapping("/{id}")
     public User updateUser(@RequestBody User user){
         return repository.save(user);
     }
@@ -57,9 +57,10 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    @DeleteMapping ("/{id}")
+    @DeleteMapping("/{id}")
     public void  deleteUser(@PathVariable String id)  {
-        repository.deleteBy(id);
+        User user = repository.findById(id);
+        repository.delete(user);
     }
 
 
