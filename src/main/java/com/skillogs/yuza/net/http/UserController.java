@@ -57,6 +57,10 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+    @DeleteMapping ("/{id}")
+    public void  deleteUser(@PathVariable String id)  {
+        repository.deleteBy(id);
+    }
 
 
 
