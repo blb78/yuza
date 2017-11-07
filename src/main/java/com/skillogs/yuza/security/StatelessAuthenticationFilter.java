@@ -1,0 +1,38 @@
+package com.skillogs.yuza.security;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.GenericFilterBean;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+public class StatelessAuthenticationFilter extends GenericFilterBean {
+
+    private final TokenAuthenticationService authenticationService;
+
+    public StatelessAuthenticationFilter(TokenAuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
+            throws IOException, ServletException {
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        Authentication authentication = authenticationService.getAuthentication(httpRequest);
+        if (authentication == null){
+            HttpServletResponse r = (HttpServletResponse) response;
+            r.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        filterChain.doFilter(request, response);
+        SecurityContextHolder.getContext().setAuthentication(null);
+    }
+}

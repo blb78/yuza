@@ -34,12 +34,12 @@ public class UserControllerTest {
 
 
 
-
     @Test
-    public void should_return_404() throws Exception {
-        mvc.perform(get(UserController.URI +"/not_found"))
-                .andExpect(status().isNotFound());
+    public void should_return_401() throws Exception {
+        mvc.perform(get(UserController.URI ))
+                .andExpect(status().isUnauthorized());
     }
+    
     @Test
     public void shouldMapUserToDto() {
         //given
