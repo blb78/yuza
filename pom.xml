@@ -17,6 +17,7 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <java-jwt.version>3.2.0</java-jwt.version>
         <maven.jar.plugin.version>3.0.2</maven.jar.plugin.version>
         <org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
     </properties>
@@ -37,6 +38,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+
 
         <!--Utils
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -56,7 +63,11 @@
             <artifactId>mapstruct</artifactId> <!-- use mapstruct-jdk8 for Java 8 or higher -->
             <version>${org.mapstruct.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${java-jwt.version}</version>
+        </dependency>
         <!--Tests
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
         <dependency>
