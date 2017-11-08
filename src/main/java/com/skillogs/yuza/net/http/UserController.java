@@ -51,7 +51,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user){
-
+        user.setId(id);
         User currentUser = repository.findById(id);
 
         if (currentUser == null){

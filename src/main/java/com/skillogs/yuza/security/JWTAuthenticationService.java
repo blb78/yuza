@@ -20,6 +20,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
@@ -80,8 +82,10 @@ public class JWTAuthenticationService implements TokenAuthenticationService{
         }
     }
     private static RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        ClassPathResource file = new ClassPathResource(filename);
-        String publicKeyContent = read(file.getInputStream());
+
+        byte[] encoded = Files.readAllBytes(Paths.get(filename));
+
+        String publicKeyContent = new String(encoded);
 
         publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");;
 
@@ -91,9 +95,9 @@ public class JWTAuthenticationService implements TokenAuthenticationService{
         return (RSAPublicKey) kf.generatePublic(keySpecX509);
     }
     private static RSAPrivateKey getPrivateKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        ClassPathResource file = new ClassPathResource(filename);
+        byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
-        String privateKeyContent = read(file.getInputStream());
+        String privateKeyContent = new String(encoded);
 
         privateKeyContent = privateKeyContent.replaceAll("\\n", "").replace("-----BEGIN RSA PRIVATE KEY-----", "").replace("-----END RSA PRIVATE KEY-----", "");
 

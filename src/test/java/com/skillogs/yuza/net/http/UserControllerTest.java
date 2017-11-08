@@ -1,5 +1,6 @@
 package com.skillogs.yuza.net.http;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillogs.yuza.domain.User;
 
 import com.skillogs.yuza.net.http.UserDto;
@@ -23,6 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,6 +37,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
+    @Autowired private ObjectMapper mapper;
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService authenticationService;
 
@@ -70,8 +73,30 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
 
     }
+    @Test
+    public void should_return_an_updated_user() throws Exception {
+        User john = new User();
+        john.setId("id");
+        john.setFirstName("John");
+        john.setPassword("password");
+        john.setLastName("Doe");
+        john.setEmail("john.doe@exemple.com");
 
-        @Test
+        when(userRepository.findById(john.getId())).thenReturn(john);
+        when(userRepository.save(john)).thenReturn(john);
+
+        mvc.perform(put(UserController.URI + "/id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(john)))
+                .andExpect(jsonPath("$.id", is("id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
+
+    }
+
+    @Test
     public void shouldMapUserToDto() {
         //given
         User user = new User();
