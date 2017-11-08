@@ -28,7 +28,6 @@ public class WebAppSecurity extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
         http.cors().and().csrf().disable().authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/users/authenticate").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 // Custom Token based authentication based on the header previously given to the client

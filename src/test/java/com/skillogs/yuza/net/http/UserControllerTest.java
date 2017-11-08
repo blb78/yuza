@@ -48,12 +48,41 @@ public class UserControllerTest {
                 .thenReturn(new TestingAuthenticationToken("aze@æze.fr", null));
     }
 
+//  url : /users/unknow_id
     @Test
     public void should_return_404() throws Exception {
         mvc.perform(get(UserController.URI+ "/unkown_id"))
                 .andExpect(status().isNotFound());
     }
 
+//  url : /users/authenticate
+    @Test
+    public void should_return_200() throws Exception {
+        User john = new User();
+        john.setId("id");
+        john.setFirstName("John");
+        john.setPassword("password");
+        john.setLastName("Doe");
+        john.setEmail("john.doe@exemple.com");
+
+        UserController.UserCredentials user = new UserController.UserCredentials();
+        user.setEmail("john.doe@exemple.com");
+        user.setPassword("password");
+
+
+        when(userRepository.findByEmailAndPassword(
+                user.getEmail(),
+                user.getPassword()))
+                .thenReturn(john);
+
+        mvc.perform(post(UserController.URI + "/authenticate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk());
+
+    }
+
+//    url : /users
     @Test
     public void should_return_a_user() throws Exception {
         User john = new User();
@@ -94,7 +123,34 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
 
+
+
     }
+    @Test
+    public void should_return_a_new_user() throws Exception {
+        User newUser = new User();
+
+        newUser.setFirstName("John");
+        newUser.setPassword("password");
+        newUser.setLastName("Doe");
+        newUser.setEmail("doe.doe@exemple.com");
+
+        when(userRepository.save(newUser)).thenAnswer(a -> {
+            User userToSave = a.getArgumentAt(0, User.class);
+            userToSave.setId("new_id");
+            return userToSave;
+        });
+        mvc.perform(post(UserController.URI )
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(newUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("new_id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")));
+    }
+
 
     @Test
     public void shouldMapUserToDto() {
@@ -106,4 +162,7 @@ public class UserControllerTest {
         //then
         assertThat(userDto.getFirstName(), is("bob"));
     }
+
+
+
 }
