@@ -29,6 +29,10 @@ public class StatelessAuthenticationFilter extends GenericFilterBean {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
+        if (httpRequest.getMethod().equals("POST") && httpRequest.getRequestURI().contains("/users/authenticate")){
+            filterChain.doFilter(request, response);
+            return;
+        }
         Authentication authentication = authenticationService.getAuthentication(httpRequest);
         if (authentication == null){
             HttpServletResponse r = (HttpServletResponse) response;

@@ -69,6 +69,7 @@ public class UserController {
         repository.delete(user);
     }
 
+
     @PostMapping("/authenticate")
     public ResponseEntity<User> authenticate(@RequestBody UserCredentials user){
         return Optional.ofNullable(repository.findByEmailAndPassword(user.getEmail(),user.getPassword()))

@@ -5,6 +5,7 @@ import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,18 +14,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 
 @EnableWebSecurity
-public class WebSecurity extends WebSecurityConfigurerAdapter {
+public class WebAppSecurity extends WebSecurityConfigurerAdapter {
 
     private final TokenAuthenticationService tokenAuthenticationService;
 
     @Autowired
-    public WebSecurity(TokenAuthenticationService tokenAuthenticationService) {
+    public WebAppSecurity(TokenAuthenticationService tokenAuthenticationService) {
         super(true);
         this.tokenAuthenticationService =  tokenAuthenticationService;
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
         http.cors().and().csrf().disable().authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/users/authenticate").permitAll()
                 .anyRequest().authenticated()
@@ -34,6 +36,11 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                         UsernamePasswordAuthenticationFilter.class)
                 // this disables session creation on Spring Security
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+    }
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/users/authenticate");
     }
 
 }
