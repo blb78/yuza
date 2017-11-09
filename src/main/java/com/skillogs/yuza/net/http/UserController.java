@@ -4,6 +4,7 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 
+import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -66,6 +67,10 @@ public class UserController {
     public void  deleteUser(@PathVariable String id)  {
 
         User user = repository.findById(id);
+        if (user == null){
+            throw new ApiNotFoundException();
+        }
+
         repository.delete(user);
     }
 

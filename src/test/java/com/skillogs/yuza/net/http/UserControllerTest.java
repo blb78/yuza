@@ -14,24 +14,30 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
 
-
+@EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
 @WebMvcTest(value = UserController.class, secure = false)
 public class UserControllerTest {
@@ -41,6 +47,16 @@ public class UserControllerTest {
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService authenticationService;
 
+    private User createUser() {
+        User john = new User();
+        john.setId("id");
+        john.setFirstName("John");
+        john.setPassword("password");
+        john.setLastName("Doe");
+        john.setEmail("john.doe@exemple.com");
+        return john;
+    }
+
 
     @Before
     public void setup() {
@@ -48,108 +64,232 @@ public class UserControllerTest {
                 .thenReturn(new TestingAuthenticationToken("aze@æze.fr", null));
     }
 
-//  url : /users/unknow_id
+
+
+    // =========================================== Get All Users ==========================================
+
     @Test
-    public void should_return_404() throws Exception {
-        mvc.perform(get(UserController.URI+ "/unkown_id"))
-                .andExpect(status().isNotFound());
+    public void get_all_success() throws Exception {
+        User john1 = createUser();
+        List<User> list = new ArrayList<User>();
+        list.add(john1);
+        Page<User> page = new PageImpl<User>(list);
+        when(userRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
+
+        mvc.perform(get(UserController.URI))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.numberOfElements").value(1))
+                .andExpect(jsonPath("$.content.[0].id").value("id"));
+
+        verify(userRepository).findAll(Mockito.any(Pageable.class));
+        verifyNoMoreInteractions(userRepository);
     }
 
-//  url : /users/authenticate
+
+    // =========================================== Get User By ID =========================================
+
     @Test
-    public void should_return_200() throws Exception {
-        User john = new User();
-        john.setId("id");
-        john.setFirstName("John");
-        john.setPassword("password");
-        john.setLastName("Doe");
-        john.setEmail("john.doe@exemple.com");
+    public void get_by_id_success() throws Exception {
+        User user = createUser();
 
-        UserController.UserCredentials user = new UserController.UserCredentials();
-        user.setEmail("john.doe@exemple.com");
+        when(userRepository.findById(user.getId())).thenReturn(user);
+
+        mvc.perform(get(UserController.URI+"/{id}", user.getId()))
+                .andExpect(status().isOk())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
+        ;
+
+        verify(userRepository, times(1)).findById(user.getId());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void get_by_id_fail_404_not_found() throws Exception {
+
+        when(userRepository.findById("gnii")).thenReturn(null);
+
+        mvc.perform(get(UserController.URI+"/{id}", "gnii"))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository).findById("gnii");
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    // =========================================== Create New User ========================================
+
+    @Test
+    public void create_user_success() throws Exception {
+        User user = new User();
+
+        user.setFirstName("John");
         user.setPassword("password");
+        user.setLastName("Doe");
+        user.setEmail("doe.doe@exemple.com");
 
+        when(userRepository.countByEmail(user.getEmail())).thenReturn((long) 0);
+        when(userRepository.save(user)).thenAnswer(a -> {
+            User userToSave = a.getArgumentAt(0, User.class);
+            userToSave.setId("new_id");
+            return userToSave;
+        });
+
+        mvc.perform(
+                post(UserController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("new_id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")))
+                ;
+
+        verify(userRepository, times(1)).countByEmail(user.getEmail());
+        verify(userRepository, times(1)).save(user);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void test_create_user_fail_409_conflict() throws Exception {
+        User user = createUser();
+
+        when(userRepository.countByEmail(user.getEmail())).thenReturn((long) 1);
+
+        mvc.perform(
+                post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isConflict());
+
+        verify(userRepository, times(1)).countByEmail(user.getEmail());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    // =========================================== Update User ===================================
+    @Test
+    public void update_user_success() throws Exception {
+        User user = createUser();
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        mvc.perform(
+                put(UserController.URI + "/{id}", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
+        ;
+
+        verify(userRepository, times(1)).findById(user.getId());
+        verify(userRepository, times(1)).save(user);
+        verifyNoMoreInteractions(userRepository);
+    }
+    @Test
+    public void update_user_fail_404_not_found() throws Exception {
+        User user = createUser();
+        user.setId("toto");
+
+        when(userRepository.findById(user.getId())).thenReturn(null);
+
+        mvc.perform(
+                put(UserController.URI + "/{id}", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository, times(1)).findById(user.getId());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    // =========================================== Delete User ============================================
+    @Test
+    public void delete_user_success() throws Exception {
+        User user = createUser();
+        when(userRepository.findById(user.getId())).thenReturn(user);
+        doNothing().when(userRepository).delete(user);
+        mvc.perform(
+                delete(UserController.URI+"/{id}", user.getId()))
+                .andExpect(status().isOk());
+        verify(userRepository).findById(user.getId());
+        verify(userRepository).delete(user);
+        verifyNoMoreInteractions(userRepository);
+    }
+    @Test
+    public void test_delete_user_fail_404_not_found() throws Exception {
+        User user = new User();
+        user.setId("toto");
+
+        when(userRepository.findById(user.getId())).thenReturn(null);
+
+        mvc.perform(
+                delete(UserController.URI+"/{id}", user.getId()))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository, times(1)).findById(user.getId());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    // =========================================== Authenticate User ===================================
+    @Test
+    public void authentication_success() throws Exception {
+
+        User john = createUser();
+        UserController.UserCredentials user = new UserController.UserCredentials();
+        user.setEmail(john.getEmail());
+        user.setPassword(john.getPassword());
 
         when(userRepository.findByEmailAndPassword(
                 user.getEmail(),
                 user.getPassword()))
                 .thenReturn(john);
 
+
         mvc.perform(post(UserController.URI + "/authenticate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk());
 
-    }
-
-//    url : /users
-    @Test
-    public void should_return_a_user() throws Exception {
-        User john = new User();
-        john.setId("id");
-        john.setFirstName("John");
-        john.setPassword("password");
-        john.setLastName("Doe");
-        john.setEmail("john.doe@exemple.com");
-        when(userRepository.findById(john.getId())).thenReturn(john);
-
-        mvc.perform(get(UserController.URI + "/id"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is("id")))
-                .andExpect(jsonPath("$.firstName", is("John")))
-                .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
+        verify(userRepository, times(1)).findByEmailAndPassword(user.getEmail(),user.getPassword());
+        verifyNoMoreInteractions(userRepository);
 
     }
     @Test
-    public void should_return_an_updated_user() throws Exception {
-        User john = new User();
-        john.setId("id");
-        john.setFirstName("John");
-        john.setPassword("password");
-        john.setLastName("Doe");
-        john.setEmail("john.doe@exemple.com");
+    public void authentication_fail_404_not_found() throws Exception {
 
-        when(userRepository.findById(john.getId())).thenReturn(john);
-        when(userRepository.save(john)).thenReturn(john);
+        User john = createUser();
+        UserController.UserCredentials user = new UserController.UserCredentials();
+        user.setEmail("gniii@gniii.com");
+        user.setPassword("gniii");
 
-        mvc.perform(put(UserController.URI + "/id")
+        when(userRepository.findByEmailAndPassword(
+                user.getEmail(),
+                user.getPassword()))
+                .thenReturn(null);
+
+
+        mvc.perform(post(UserController.URI + "/authenticate")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(john)))
-                .andExpect(jsonPath("$.id", is("id")))
-                .andExpect(jsonPath("$.firstName", is("John")))
-                .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
+                .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isNotFound());
 
-
+        verify(userRepository, times(1)).findByEmailAndPassword(user.getEmail(),user.getPassword());
+        verifyNoMoreInteractions(userRepository);
 
     }
-    @Test
-    public void should_return_a_new_user() throws Exception {
-        User newUser = new User();
 
-        newUser.setFirstName("John");
-        newUser.setPassword("password");
-        newUser.setLastName("Doe");
-        newUser.setEmail("doe.doe@exemple.com");
 
-        when(userRepository.save(newUser)).thenAnswer(a -> {
-            User userToSave = a.getArgumentAt(0, User.class);
-            userToSave.setId("new_id");
-            return userToSave;
-        });
-        mvc.perform(post(UserController.URI )
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(newUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is("new_id")))
-                .andExpect(jsonPath("$.firstName", is("John")))
-                .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")));
-    }
 
 
     @Test

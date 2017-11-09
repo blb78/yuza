@@ -24,7 +24,7 @@ mvn-test:
     image: maven:3.5.0-jdk-9-slim
 
     script:
-        - mvn test
+        - mvn clean install
 
 clever-deploy-itg:
     stage: deploy

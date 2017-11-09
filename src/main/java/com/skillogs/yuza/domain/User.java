@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -19,7 +20,7 @@ public class User {
     private String lastName;
     private String city;
     private String country;
-    private List<String> courses;
+    private ArrayList<String> courses = new ArrayList<String>();
     private long birthday;
     @JsonIgnore
     private String picture;
@@ -123,12 +124,15 @@ public class User {
         this.country = country;
     }
 
-    public List<String> getCourses() {
+    public ArrayList<String> getCourses() {
         return courses;
     }
 
-    public void setCourses(List<String> courses) {
+    public void setCourses(ArrayList<String> courses) {
         this.courses = courses;
+    }
+    public void addCourse(String course){
+        this.courses.add(course);
     }
 
     @Override
