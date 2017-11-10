@@ -29,4 +29,4 @@ mvn spring-boot:run -Dspring.profiles.active=local
 ## Endpoints
 ### User Ressources
 
-- **[<code>GET</code> users](documentation/endpointsGET_USERS.md)**
+- **[<code>GET</code> users](./documentation/endpoints/GET_USERS.md)**
