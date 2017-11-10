@@ -29,5 +29,4 @@ mvn spring-boot:run -Dspring.profiles.active=local
 ## Endpoints
 ### User Ressources
 
-- **[<code>GET</code> users](https://git.skillogs.com/skillogs/yuza/tree/develop/documentation/endpoints/GET_USERS.md)**
-
+- **[<code>GET</code> users](GET_USERS.md)**
