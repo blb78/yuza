@@ -1,6 +1,7 @@
 package com.skillogs.yuza.net.http;
 
 import com.skillogs.yuza.net.exception.ApiConflictException;
+import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -20,6 +21,10 @@ class GlobalControllerExceptionHandler {
     @ExceptionHandler(ApiNotFoundException.class)
     @ResponseStatus(value= HttpStatus.NOT_FOUND, reason="User not found")
     public void ApiNotFoundException()  {  }
+
+    @ExceptionHandler(ApiCourseNotFoundException.class)
+    @ResponseStatus(value= HttpStatus.NOT_FOUND, reason="Course not found")
+    public void ApiCourseNotFoundException()  {  }
 
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(value= HttpStatus.UNAUTHORIZED)

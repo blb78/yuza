@@ -4,6 +4,7 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 
+import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,7 +124,7 @@ public class UserController {
         }
         Set hSet = user.getCourses();
         if (!hSet.contains(new String(course))){
-            throw new ApiNotFoundException();
+            throw new ApiCourseNotFoundException();
         }
 
         hSet.remove(course);
