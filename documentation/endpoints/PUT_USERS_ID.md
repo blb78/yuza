@@ -1,10 +1,10 @@
 # User Resources
 ```
-    POST users
+    PUT users/{id}
 ```
 
 ## Description
-Create a user.
+Update a user.
 
 ***
 
@@ -15,11 +15,7 @@ Create a user.
 
 ## Parameters
 ### Body
-Fields required 
-- email
-- firstName
-- lastName
-- password
+All User fields are required 
 
 
 ***
@@ -36,14 +32,14 @@ A object with the following keys and values:
 ***
 
 ## Errors
-- 409 Conflict — User with the specified ID already exist.
+- 404 Not Found — User with the specified ID does not exist.
 
 ***
 
 ## Example
 **Request**
 
-    https://localhost/users
+    https://localhost/users/5a05ca6d521a52467080aad5
 
 **Return** __shortened for example purpose__
 ``` json

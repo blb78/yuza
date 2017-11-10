@@ -1,24 +1,21 @@
 # User Resources
 ```
-    POST users
+    POST users/authenticate
 ```
 
 ## Description
-Create a user.
+Check credentials
 
 ***
 
 ## Requires authentication
-* A valid JWT must be provided.
-
+None
 ***
 
 ## Parameters
 ### Body
 Fields required 
 - email
-- firstName
-- lastName
 - password
 
 
@@ -36,14 +33,14 @@ A object with the following keys and values:
 ***
 
 ## Errors
-- 409 Conflict — User with the specified ID already exist.
+- 404 Not Found — User with the specified ID does not exist.
 
 ***
 
 ## Example
 **Request**
 
-    https://localhost/users
+    https://localhost/users/authenticate
 
 **Return** __shortened for example purpose__
 ``` json

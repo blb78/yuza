@@ -1,10 +1,10 @@
 # User Resources
 ```
-    GET users/{id}/courses
+    PUT users/{id}/courses/{id}
 ```
 
 ## Description
-Returns an array of courses ID.
+Add a course ID in an array of course ID.
 
 ***
 
@@ -14,7 +14,6 @@ Returns an array of courses ID.
 ***
 
 ## Parameters
-
 None
 
 
@@ -23,12 +22,9 @@ None
 ## Return format
 An array of courses ID
 
-
-
 ***
 
 ## Errors
-
 - 404 Not Found — User with the specified ID does not exist.
 
 ***
@@ -36,9 +32,9 @@ An array of courses ID
 ## Example
 **Request**
 
-    https://localhost/users/59fafeb66af0fe7def998208/courses
+    https://localhost/users/5a05ca6d521a52467080aad5/courses/1234
 
 **Return** __shortened for example purpose__
 ``` json
-["titi","toto"]
+["666","1234"]
 ```

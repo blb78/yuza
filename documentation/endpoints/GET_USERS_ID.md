@@ -9,7 +9,7 @@ Returns a user object
 ***
 
 ## Requires authentication
-* A valid JWT must be provided in **Authorization**  header parameter's.
+* A valid JWT must be provided.
 
 ***
 

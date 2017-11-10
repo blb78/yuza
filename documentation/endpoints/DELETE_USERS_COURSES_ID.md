@@ -1,10 +1,10 @@
 # User Resources
 ```
-    GET users/{id}/courses
+    DELETE users/{id}/courses/{id}
 ```
 
 ## Description
-Returns an array of courses ID.
+Delete a user course's
 
 ***
 
@@ -17,28 +17,26 @@ Returns an array of courses ID.
 
 None
 
-
 ***
 
 ## Return format
 An array of courses ID
 
-
-
 ***
 
 ## Errors
-
-- 404 Not Found — User with the specified ID does not exist.
+- 404 Not Found — User/Course with the specified ID does not exist.
 
 ***
 
 ## Example
 **Request**
-
-    https://localhost/users/59fafeb66af0fe7def998208/courses
+```
+https://localhost/users/59fafeb66af0fe7def998208/courses/666
+```
+ 
 
 **Return** __shortened for example purpose__
 ``` json
-["titi","toto"]
+    ["111","222","333","444","555","777","888"]
 ```
