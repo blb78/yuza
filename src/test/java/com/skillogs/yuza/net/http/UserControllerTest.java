@@ -26,9 +26,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static org.hamcrest.Matchers.any;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.IsCollectionContaining.hasItems;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -105,7 +106,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
         ;
 
-        verify(userRepository, times(1)).findById(user.getId());
+        verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
     }
 
@@ -151,8 +152,8 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")))
                 ;
 
-        verify(userRepository, times(1)).countByEmail(user.getEmail());
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository).countByEmail(user.getEmail());
+        verify(userRepository).save(user);
         verifyNoMoreInteractions(userRepository);
     }
 
@@ -168,7 +169,7 @@ public class UserControllerTest {
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isConflict());
 
-        verify(userRepository, times(1)).countByEmail(user.getEmail());
+        verify(userRepository).countByEmail(user.getEmail());
         verifyNoMoreInteractions(userRepository);
     }
 
@@ -192,8 +193,8 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
         ;
 
-        verify(userRepository, times(1)).findById(user.getId());
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository).findById(user.getId());
+        verify(userRepository).save(user);
         verifyNoMoreInteractions(userRepository);
     }
     @Test
@@ -209,7 +210,7 @@ public class UserControllerTest {
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isNotFound());
 
-        verify(userRepository, times(1)).findById(user.getId());
+        verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
     }
 
@@ -237,7 +238,7 @@ public class UserControllerTest {
                 delete(UserController.URI+"/{id}", user.getId()))
                 .andExpect(status().isNotFound());
 
-        verify(userRepository, times(1)).findById(user.getId());
+        verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
     }
 
@@ -261,7 +262,7 @@ public class UserControllerTest {
                 .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk());
 
-        verify(userRepository, times(1)).findByEmailAndPassword(user.getEmail(),user.getPassword());
+        verify(userRepository).findByEmailAndPassword(user.getEmail(),user.getPassword());
         verifyNoMoreInteractions(userRepository);
 
     }
@@ -284,12 +285,154 @@ public class UserControllerTest {
                 .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isNotFound());
 
-        verify(userRepository, times(1)).findByEmailAndPassword(user.getEmail(),user.getPassword());
+        verify(userRepository).findByEmailAndPassword(user.getEmail(),user.getPassword());
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    // =========================================== Courses User ===================================
+    @Test
+    public void get_courses_success() throws Exception {
+        User user = createUser();
+        when(userRepository.findById(user.getId())).thenReturn(user);
+
+
+
+        mvc.perform(get(UserController.URI+"/{id}/courses", user.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$").isArray());
+
+        ;
+
+        verify(userRepository).findById(user.getId());
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    @Test
+    public void get_courses_fail_404_not_found() throws Exception {
+
+        when(userRepository.findById("gnii")).thenReturn(null);
+
+        mvc.perform(get(UserController.URI+"/{id}", "gnii"))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository).findById("gnii");
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    // =========================================== Add Course User ===================================
+    @Test
+    public void add_courses_success() throws Exception {
+        User user = createUser();
+        user.addCourse("toto");
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        mvc.perform(
+                put(UserController.URI + "/{id}/courses/toto", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$").isArray())
+        ;
+
+        verify(userRepository).findById(user.getId());
+        verify(userRepository).save(user);
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    @Test
+    public void add_courses_fail_404_not_found() throws Exception {
+
+        when(userRepository.findById("gnii")).thenReturn(null);
+
+        mvc.perform(put(UserController.URI+"/{id}/courses/{course}", "gnii","bla"))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository).findById("gnii");
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    // =========================================== Delete Course User ===================================
+    @Test
+    public void delete_courses_success() throws Exception {
+        User user = createUser();
+        user.addCourse("toto");
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        mvc.perform(
+                delete(UserController.URI + "/{id}/courses/toto", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty())
+        ;
+
+        verify(userRepository).findById(user.getId());
+        verify(userRepository).save(user);
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    @Test
+    public void delete_courses_fail_404_not_found() throws Exception {
+        User user = createUser();
+        user.addCourse("toto");
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+
+        mvc.perform(
+                delete(UserController.URI + "/{id}/courses/gniiiii", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+        ;
+
+        verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
 
     }
 
+    // =========================================== Delete ALL Courses User ===================================
 
+    @Test
+    public void delete_all_courses_success() throws Exception {
+        User user = createUser();
+        user.addCourse("toto");
+        user.addCourse("tutu");
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        mvc.perform(
+                delete(UserController.URI + "/{id}/courses", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty())
+        ;
+
+        verify(userRepository).findById(user.getId());
+        verify(userRepository).save(user);
+        verifyNoMoreInteractions(userRepository);
+
+    }
+    @Test
+    public void delete_all_courses_fail_404_not_found() throws Exception {
+
+        when(userRepository.findById("gnii")).thenReturn(null);
+
+        mvc.perform(delete(UserController.URI+"/{id}/courses", "gnii"))
+                .andExpect(status().isNotFound());
+
+        verify(userRepository).findById("gnii");
+        verifyNoMoreInteractions(userRepository);
+
+    }
 
 
     @Test
@@ -302,7 +445,6 @@ public class UserControllerTest {
         //then
         assertThat(userDto.getFirstName(), is("bob"));
     }
-
 
 
 }

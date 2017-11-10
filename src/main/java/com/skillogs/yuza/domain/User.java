@@ -6,7 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Document
@@ -20,7 +22,7 @@ public class User {
     private String lastName;
     private String city;
     private String country;
-    private ArrayList<String> courses = new ArrayList<String>();
+    private Set<String> courses = new HashSet<String>();
     private long birthday;
     @JsonIgnore
     private String picture;
@@ -124,13 +126,14 @@ public class User {
         this.country = country;
     }
 
-    public ArrayList<String> getCourses() {
+    public Set<String> getCourses() {
         return courses;
     }
 
-    public void setCourses(ArrayList<String> courses) {
+    public void setCourses(Set<String> courses) {
         this.courses = courses;
     }
+
     public void addCourse(String course){
         this.courses.add(course);
     }
@@ -162,4 +165,6 @@ public class User {
     public int hashCode() {
         return email.hashCode();
     }
+
+
 }

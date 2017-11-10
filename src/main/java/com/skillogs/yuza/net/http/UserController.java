@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 
 @RestController
@@ -65,15 +67,12 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public void  deleteUser(@PathVariable String id)  {
-
         User user = repository.findById(id);
         if (user == null){
             throw new ApiNotFoundException();
         }
-
         repository.delete(user);
     }
-
 
     @PostMapping("/authenticate")
     public ResponseEntity<User> authenticate(@RequestBody UserCredentials user){
@@ -82,9 +81,58 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}/courses")
+    public ResponseEntity<Set<String>> findCourses(@PathVariable String id)  {
+        return Optional.ofNullable(repository.findById(id))
+                .map(User::getCourses)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @DeleteMapping("/{id}/courses")
+    public ResponseEntity<Set<String>> deleteAllCourses(@PathVariable String id)  {
+        User user = repository.findById(id);
+        if (user == null){
+            throw new ApiNotFoundException();
+        }
+        Set<String> s = Collections.emptySet();
+        user.setCourses(s);
+        return Optional.ofNullable(repository.save(user))
+                .map(User::getCourses)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @PutMapping("/{id}/courses/{course}")
+    public ResponseEntity<Set<String>> addCourse(@PathVariable String id, @PathVariable String course)  {
+        User user = repository.findById(id);
+        if (user == null){
+            throw new ApiNotFoundException();
+        }
+        user.addCourse(course);
 
+        return Optional.ofNullable(repository.save(user))
+                .map(User::getCourses)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
 
+    }
+    @DeleteMapping("/{id}/courses/{course}")
+    public ResponseEntity<Set<String>> deleteCourse(@PathVariable String id, @PathVariable String course)  {
+        User user = repository.findById(id);
+        if (user == null){
+            throw new ApiNotFoundException();
+        }
+        Set hSet = user.getCourses();
+        if (!hSet.contains(new String(course))){
+            throw new ApiNotFoundException();
+        }
 
+        hSet.remove(course);
+        user.setCourses(hSet);
+        return Optional.ofNullable(repository.save(user))
+                .map(User::getCourses)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     public static class UserCredentials {
         private String email;
