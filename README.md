@@ -1,40 +1,33 @@
-## Some commands
+#Yuza
+Mirco service utilisateur écrit en java
+
+## Getting Started
+Développer avec le framework [Spring Boot](https://projects.spring.io/spring-boot/) et [maven](https://github.com/apache/maven/blob/master/apache-maven/README.txt)
+
+### Prérequis
+- Java 1.8
+- Maven
+
+### Installation
+```
+git clone git@git.skillogs.com:skillogs/yuza.git 
+```
 
 ### Compile + Tests
 
-```sh
+```
 mvn clean install
 ```
 
 ### Launch
 
 
-```sh
+```
 mvn spring-boot:run -Dspring.profiles.active=local 
 ```
 
-### Url
+## Endpoints
+### User Ressources
 
-- /users [GET,POST]
-- /users/{id} [GET,PUT,DELETE]
-- /users/authenticate [POST]
+- **[<code>GET</code> users](https://git.skillogs.com/skillogs/yuza/tree/develop/documentation/endpoints/GET_USERS.md)**
 
-exemple d'objet json pour la creation :
-
-```
-{
- 	"email": "toto@toto.com",
- 	"firstName": "toto",
- 	"lastName": "toto",
- 	"password":"toto" 
- 	}
- ```
-
-exemple d'objet json pour l'auth :
- 
-```
-{
- 	"email": "toto@toto.com",
- 	"password":"toto" 
- 	}
- ```
