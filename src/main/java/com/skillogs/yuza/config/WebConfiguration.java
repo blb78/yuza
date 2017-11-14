@@ -7,6 +7,7 @@ import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletCon
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -16,6 +17,7 @@ import javax.servlet.Filter;
 import static java.util.Arrays.asList;
 
 @Configuration
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebConfiguration {
     @Bean
     public EmbeddedServletContainerFactory servletContainer() {

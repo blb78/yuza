@@ -23,6 +23,7 @@ public class User {
     private String city;
     private String country;
     private Set<String> courses = new HashSet<String>();
+    private Set<String> roles = new HashSet<String>();
     private long birthday;
     @JsonIgnore
     private String picture;
@@ -136,6 +137,17 @@ public class User {
 
     public void addCourse(String course){
         this.courses.add(course);
+    }
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
+    }
+    public void addRole(String role){
+        this.roles.add(role);
     }
 
     @Override

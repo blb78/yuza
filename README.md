@@ -26,7 +26,7 @@ mvn clean install
 mvn spring-boot:run -Dspring.profiles.active=local 
 ```
 
-## Endpoints
+## Endpoints Description
 
 - **[<code>GET</code> users](./documentation/endpoints/GET_USERS.md)**
 - **[<code>GET</code> users/{id}](./documentation/endpoints/GET_USERS_ID.md)**

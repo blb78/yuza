@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -45,7 +46,7 @@ public class UserController {
 
         return repository.save(user);
     }
-
+    @Secured("ROLE_ADMIN")
     @GetMapping("/{id}")
     public ResponseEntity<User> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
@@ -79,7 +80,7 @@ public class UserController {
     public ResponseEntity<User> authenticate(@RequestBody UserCredentials user){
         return Optional.ofNullable(repository.findByEmailAndPassword(user.getEmail(),user.getPassword()))
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @GetMapping("/{id}/courses")
