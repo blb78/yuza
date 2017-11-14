@@ -283,7 +283,7 @@ public class UserControllerTest {
         mvc.perform(post(UserController.URI + "/authenticate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isUnauthorized());
 
         verify(userRepository).findByEmailAndPassword(user.getEmail(),user.getPassword());
         verifyNoMoreInteractions(userRepository);
