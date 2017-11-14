@@ -33,7 +33,7 @@ A object with the following keys and values:
 ***
 
 ## Errors
-- 404 Not Found — User with the specified ID does not exist.
+- 401 Unauthorized — Bad credential.
 
 ***
 
