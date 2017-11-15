@@ -117,7 +117,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
         ;
 
@@ -163,7 +162,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("new_id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")))
                 ;
 
@@ -204,7 +202,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
         ;
 

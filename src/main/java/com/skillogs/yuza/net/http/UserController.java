@@ -33,7 +33,6 @@ public class UserController {
     }
 
     @GetMapping
-    @Secured("ROLE_ADMIN")
     public Page<User> findAll(Pageable pageable){
         return repository.findAll(pageable);
     }
