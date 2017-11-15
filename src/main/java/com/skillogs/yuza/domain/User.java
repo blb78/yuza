@@ -4,19 +4,17 @@ package com.skillogs.yuza.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.Serializable;
+import java.util.*;
 
 
 @Document
-public class User {
+public class User  {
     @Id
     private String id;
     private String email;
-    @JsonIgnore
     private String password;
     private String firstName;
     private String lastName;
@@ -33,6 +31,15 @@ public class User {
     private boolean locked = false;
     @JsonIgnore
     private long createdAt  = System.currentTimeMillis();
+
+    public User(String email) {
+        this.email = email;
+    }
+
+    public User() {
+
+    }
+
 
     public String getId() {
         return id;

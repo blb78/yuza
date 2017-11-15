@@ -7,6 +7,8 @@ import com.skillogs.yuza.net.http.UserDto;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.StatelessAuthenticationFilter;
 import com.skillogs.yuza.security.TokenAuthenticationService;
+import com.skillogs.yuza.security.TokenProvider;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,11 +22,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -45,8 +52,10 @@ public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
+
+    @MockBean private UserDetailsService detailsService;
     @MockBean private UserRepository userRepository;
-    @MockBean private TokenAuthenticationService authenticationService;
+    @MockBean private TokenAuthenticationService tkpv;
 
     private User createUser() {
         User john = new User();
@@ -61,8 +70,14 @@ public class UserControllerTest {
 
     @Before
     public void setup() {
-        when(authenticationService.getAuthentication(Mockito.any()))
-                .thenReturn(new TestingAuthenticationToken("aze@æze.fr", null));
+        TestingAuthenticationToken auth = new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN");
+        when(tkpv.getAuthentication(Mockito.any())).thenReturn(auth);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @After
+    public void clean() {
+        SecurityContextHolder.clearContext();
     }
 
 

@@ -33,6 +33,7 @@ public class UserController {
     }
 
     @GetMapping
+    @Secured("ROLE_ADMIN")
     public Page<User> findAll(Pageable pageable){
         return repository.findAll(pageable);
     }
@@ -46,7 +47,6 @@ public class UserController {
 
         return repository.save(user);
     }
-    @Secured("ROLE_ADMIN")
     @GetMapping("/{id}")
     public ResponseEntity<User> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
