@@ -7,6 +7,8 @@ import com.skillogs.yuza.net.exception.ApiConflictException;
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +35,7 @@ public class UserController {
 
     @GetMapping
     public Page<UserDto> findAll(Pageable pageable){
-        return repository.findAll(pageable).map(UserMapper.INSTANCE::toDTO);
+        return repository.findAll(pageable).map(Mappers.getMapper(UserMapper.class)::toDTO);
     }
 
     @PostMapping
@@ -48,7 +50,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
-                .map(UserMapper.INSTANCE::toDTO)
+                .map(Mappers.getMapper(UserMapper.class)::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

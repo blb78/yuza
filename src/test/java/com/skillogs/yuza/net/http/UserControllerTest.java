@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -439,7 +440,7 @@ public class UserControllerTest {
         User user = new User();
         user.setFirstName("bob");
         //when
-        UserDto userDto = UserMapper.INSTANCE.toDTO(user);
+        UserDto userDto = Mappers.getMapper(UserMapper.class).toDTO(user);
         //then
         assertThat(userDto.getFirstName(), is("bob"));
 
