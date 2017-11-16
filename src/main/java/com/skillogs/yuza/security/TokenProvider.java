@@ -84,7 +84,7 @@ public class TokenProvider implements TokenAuthenticationService{
         try {
             verifier.verify(token.replace(TOKEN_PREFIX, ""));
             return true;
-        } catch (JWTVerificationException exception){
+        } catch (JWTVerificationException | NullPointerException exception){
             return false;
         }
     }
