@@ -19,14 +19,16 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-public class StatelessAuthenticationFilterTest {
-    private StatelessAuthenticationFilter filter;
+public class JWTFilterTest {
 
-    @MockBean private TokenAuthenticationService tokenAuthenticationService;
+    private JWTFilter filter;
+    @MockBean
+    private TokenProvider tokenProvider;
+
 
     @Before
     public void setup() {
-        filter = new StatelessAuthenticationFilter(tokenAuthenticationService);
+        filter = new JWTFilter(tokenProvider);
     }
 
     @Test
@@ -35,7 +37,7 @@ public class StatelessAuthenticationFilterTest {
         MockHttpServletRequest req = new MockHttpServletRequest();
         MockHttpServletResponse res = new MockHttpServletResponse();
 
-        when(tokenAuthenticationService.getAuthentication(req))
+        when(tokenProvider.getAuthentication(req))
                 .thenReturn(null);
 
         filter.doFilter(req, res, mockChain);
@@ -49,12 +51,11 @@ public class StatelessAuthenticationFilterTest {
         MockHttpServletRequest req = new MockHttpServletRequest();
         MockHttpServletResponse res = new MockHttpServletResponse();
 
-        when(tokenAuthenticationService.getAuthentication(req))
+        when(tokenProvider.getAuthentication(req))
                 .thenReturn(new TestingAuthenticationToken("address@host.com", null));
 
         filter.doFilter(req, res, mockChain);
 
         assertThat(res.getStatus(), is(HttpStatus.OK.value()));
     }
-
 }

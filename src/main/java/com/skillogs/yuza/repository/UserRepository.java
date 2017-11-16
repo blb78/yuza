@@ -1,9 +1,6 @@
 package com.skillogs.yuza.repository;
 
-import com.skillogs.yuza.domain.*;
-
-
-import com.skillogs.yuza.net.http.UserDto;
+import com.skillogs.yuza.domain.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 

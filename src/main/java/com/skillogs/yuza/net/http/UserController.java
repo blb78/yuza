@@ -4,22 +4,17 @@ package com.skillogs.yuza.net.http;
 
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.exception.ApiConflictException;
-
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,7 +33,7 @@ public class UserController {
 
     @GetMapping
     public Page<UserDto> findAll(Pageable pageable){
-        return repository.findAll(pageable).map(UserMapper.INSTANCE::userToUserDto);
+        return repository.findAll(pageable).map(UserMapper.INSTANCE::toDTO);
     }
 
     @PostMapping
@@ -53,7 +48,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
-                .map(UserMapper.INSTANCE::userToUserDto)
+                .map(UserMapper.INSTANCE::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

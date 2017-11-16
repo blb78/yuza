@@ -1,10 +1,8 @@
 package com.skillogs.yuza.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;
@@ -21,8 +19,8 @@ import java.io.IOException;
  */
 public class JWTFilter extends GenericFilterBean {
 
-    private TokenProvider tokenProvider;
-    @Autowired
+    private final TokenProvider tokenProvider;
+
     public JWTFilter(TokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;
     }
@@ -42,11 +40,4 @@ public class JWTFilter extends GenericFilterBean {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
-    private String resolveToken(HttpServletRequest request){
-        String bearerToken = request.getHeader(JWTConfigurer.AUTHORIZATION_HEADER);
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7, bearerToken.length());
-        }
-        return null;
-    }
 }

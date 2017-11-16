@@ -18,7 +18,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,11 +34,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.util.Collections.emptyList;
 
 @Component
 public class TokenProvider implements TokenAuthenticationService{
@@ -48,11 +44,9 @@ public class TokenProvider implements TokenAuthenticationService{
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HEADER_STRING = "Authorization";
 
-
     @Autowired
-    public void init(@Value("${key.rsa.private}") String keyPriv,
-                     @Value("${key.rsa.public}") String keyPub)
-            throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
+                         @Value("${key.rsa.public}") String keyPub)throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
 
         Algorithm a = Algorithm.RSA256(
                 getPublicKey(keyPub),
@@ -60,20 +54,20 @@ public class TokenProvider implements TokenAuthenticationService{
         this.verifier = JWT.require(a).build();
     }
 
+    @Override
     public Authentication getAuthentication(HttpServletRequest req) {
         String token = req.getHeader(HEADER_STRING);
-        if (token == null) return null;
+
         if (!isValid(token)) return null;
-        DecodedJWT Token = decode(token);
+        DecodedJWT jwt = decode(token);
 
-
-
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(Token.getClaim("roles").toString().split(","))
+        List<GrantedAuthority> authorities =
+                Arrays.stream(jwt.getClaim("roles").toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        User principal = new User(Token.getClaim("email").asString());
+
+        User principal = new User(jwt.getClaim("email").asString());
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
@@ -81,7 +75,6 @@ public class TokenProvider implements TokenAuthenticationService{
     private DecodedJWT decode(String token) {
         try {
             return JWT.decode(token.replace(TOKEN_PREFIX, ""));
-            // return jwt.getClaim("email").asString();
         } catch (JWTDecodeException exception){
             return null;
         }

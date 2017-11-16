@@ -1,8 +1,5 @@
 package com.skillogs.yuza.net.http;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.data.annotation.Id;
-
 public class UserDto {
 
     private String id;
