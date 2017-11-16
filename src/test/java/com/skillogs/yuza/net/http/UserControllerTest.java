@@ -52,11 +52,13 @@ public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
+    
 
     @MockBean private UserDetailsService detailsService;
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
 
+    
     private User createUser() {
         User john = new User();
         john.setId("id");
@@ -95,6 +97,7 @@ public class UserControllerTest {
         mvc.perform(get(UserController.URI))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.numberOfElements").value(1))
                 .andExpect(jsonPath("$.content.[0].id").value("id"));
 
@@ -456,6 +459,8 @@ public class UserControllerTest {
         UserDto userDto = UserMapper.INSTANCE.userToUserDto(user);
         //then
         assertThat(userDto.getFirstName(), is("bob"));
+
+        
     }
 
 
