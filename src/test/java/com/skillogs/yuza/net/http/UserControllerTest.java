@@ -8,11 +8,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,19 +35,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
+@Import(UserMapperImpl.class)
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
-@WebMvcTest(value = UserController.class, secure = false)
+@WebMvcTest(value = {UserController.class}, secure = false)
 public class UserControllerTest {
 
-    private  UserMapper usermapper;
+
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
+    @Autowired private UserMapperImpl userMapper;
+
+
 
 
     @MockBean private UserDetailsService detailsService;
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
+
 
 
     private User createUser() {
@@ -59,7 +64,6 @@ public class UserControllerTest {
         john.setEmail("john.doe@exemple.com");
         return john;
     }
-
 
 
     @Before
@@ -440,11 +444,11 @@ public class UserControllerTest {
         User user = new User();
         user.setFirstName("bob");
         //when
-        UserDto userDto = Mappers.getMapper(UserMapper.class).toDTO(user);
+
+        UserDto userDto = userMapper.toDTO(user);
         //then
         assertThat(userDto.getFirstName(), is("bob"));
 
-        
     }
 
 

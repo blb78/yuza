@@ -4,7 +4,6 @@ package com.skillogs.yuza.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.skillogs.yuza.domain.User;
@@ -58,8 +57,8 @@ public class TokenProvider implements TokenAuthenticationService{
     public Authentication getAuthentication(HttpServletRequest req) {
         String token = req.getHeader(HEADER_STRING);
 
-        if (!isValid(token)) return null;
-        DecodedJWT jwt = decode(token);
+        DecodedJWT jwt = (token == null)?null:isValid(token);
+        if (jwt == null) return null;
 
         List<GrantedAuthority> authorities =
                 Arrays.stream(jwt.getClaim("roles").toString().split(","))
@@ -72,20 +71,11 @@ public class TokenProvider implements TokenAuthenticationService{
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
-    private DecodedJWT decode(String token) {
+    private DecodedJWT isValid(String token) {
         try {
-            return JWT.decode(token.replace(TOKEN_PREFIX, ""));
-        } catch (JWTDecodeException exception){
+            return  verifier.verify(token.replace(TOKEN_PREFIX, ""));
+        } catch (JWTVerificationException  exception){
             return null;
-        }
-    }
-
-    private boolean isValid(String token) {
-        try {
-            verifier.verify(token.replace(TOKEN_PREFIX, ""));
-            return true;
-        } catch (JWTVerificationException | NullPointerException exception){
-            return false;
         }
     }
     private static RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
