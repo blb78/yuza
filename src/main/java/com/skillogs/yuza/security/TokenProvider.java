@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -41,7 +42,7 @@ public class TokenProvider implements TokenAuthenticationService{
 
     private  JWTVerifier verifier;
     private static final String TOKEN_PREFIX = "Bearer ";
-    private static final String HEADER_STRING = "Authorization";
+    private static final String AUTHORISATION_HEADER = "Authorization";
 
     @Autowired
     public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
@@ -55,24 +56,23 @@ public class TokenProvider implements TokenAuthenticationService{
 
     @Override
     public Authentication getAuthentication(HttpServletRequest req) {
-        String token = req.getHeader(HEADER_STRING);
-
-        DecodedJWT jwt = (token == null)?null:isValid(token);
-        if (jwt == null) return null;
+        DecodedJWT token = isValid(req.getHeader(AUTHORISATION_HEADER));
+        if (token== null) return null;
 
         List<GrantedAuthority> authorities =
-                Arrays.stream(jwt.getClaim("roles").toString().split(","))
+                Arrays.stream(token.getClaim("roles").toString().split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
 
-        User principal = new User(jwt.getClaim("email").asString());
+        User principal = new User(token.getClaim("email").asString());
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     private DecodedJWT isValid(String token) {
         try {
+            if (StringUtils.isEmpty(token)) return null;
             return  verifier.verify(token.replace(TOKEN_PREFIX, ""));
         } catch (JWTVerificationException  exception){
             return null;

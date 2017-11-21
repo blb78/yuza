@@ -11,7 +11,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,13 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = {UserController.class}, secure = false)
 public class UserControllerTest {
 
-
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
     @Autowired private UserMapperImpl userMapper;
-
-
-
 
     @MockBean private UserDetailsService detailsService;
     @MockBean private UserRepository userRepository;
