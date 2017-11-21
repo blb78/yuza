@@ -1,9 +1,9 @@
 package com.skillogs.yuza.net.http;
 
 
+
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.exception.ApiConflictException;
-
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
 import com.skillogs.yuza.repository.UserRepository;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -26,15 +25,17 @@ public class UserController {
     public static final String URI = "/users";
 
     private final UserRepository repository;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserController(UserRepository repository) {
+    public UserController(UserRepository repository, UserMapper userMapper) {
         this.repository = repository;
+        this.userMapper = userMapper;
     }
 
     @GetMapping
-    public Page<User> findAll(Pageable pageable){
-        return repository.findAll(pageable);
+    public Page<UserDto> findAll(Pageable pageable){
+        return repository.findAll(pageable).map(userMapper::toDTO);
     }
 
     @PostMapping
@@ -46,10 +47,10 @@ public class UserController {
 
         return repository.save(user);
     }
-    @Secured("ROLE_ADMIN")
     @GetMapping("/{id}")
-    public ResponseEntity<User> findUser(@PathVariable String id)  {
+    public ResponseEntity<UserDto> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
+                .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -156,6 +157,7 @@ public class UserController {
             this.password = password;
         }
     }
+
 
 
 }

@@ -1,19 +1,22 @@
 package com.skillogs.yuza.security;
 
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.skillogs.yuza.domain.User;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -29,56 +32,50 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.Optional;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
+@Component
+public class TokenProvider implements TokenAuthenticationService{
 
-@Service
-public class JWTAuthenticationService implements TokenAuthenticationService{
-    private final JWTVerifier verifier;
+    private  JWTVerifier verifier;
     private static final String TOKEN_PREFIX = "Bearer ";
-    private static final String HEADER_STRING = "Authorization";
+    private static final String AUTHORISATION_HEADER = "Authorization";
 
     @Autowired
-    public JWTAuthenticationService(@Value("${key.rsa.private}") String keyPriv,
-                                      @Value("${key.rsa.public}") String keyPub)
-            throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
+                         @Value("${key.rsa.public}") String keyPub)throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
 
         Algorithm a = Algorithm.RSA256(
                 getPublicKey(keyPub),
                 getPrivateKey(keyPriv));
-        verifier = JWT.require(a).build();
+        this.verifier = JWT.require(a).build();
     }
-
 
     @Override
     public Authentication getAuthentication(HttpServletRequest req) {
-        String token = req.getHeader(HEADER_STRING);
-        if (token == null) return null;
-        if (!isValid(token)) return null;
+        DecodedJWT token = isValid(req.getHeader(AUTHORISATION_HEADER));
+        if (token== null) return null;
 
-        return Optional.ofNullable(getUsernameFromToken(token))
-                .map(email -> new UsernamePasswordAuthenticationToken(email, null, emptyList()))
-                .orElse(null);
+        List<GrantedAuthority> authorities =
+                Arrays.stream(token.getClaim("roles").toString().split(","))
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+
+
+        User principal = new User(token.getClaim("email").asString());
+
+        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
-    private String getUsernameFromToken(String token) {
+    private DecodedJWT isValid(String token) {
         try {
-            DecodedJWT jwt = JWT.decode(token.replace(TOKEN_PREFIX, ""));
-            return jwt.getClaim("email").asString();
-        } catch (JWTDecodeException exception){
+            if (StringUtils.isEmpty(token)) return null;
+            return  verifier.verify(token.replace(TOKEN_PREFIX, ""));
+        } catch (JWTVerificationException  exception){
             return null;
-        }
-    }
-
-    private boolean isValid(String token) {
-        try {
-            verifier.verify(token.replace(TOKEN_PREFIX, ""));
-            return true;
-        } catch (JWTVerificationException exception){
-            return false;
         }
     }
     private static RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -124,6 +121,4 @@ public class JWTAuthenticationService implements TokenAuthenticationService{
             return buffer.lines().collect(Collectors.joining("\n"));
         }
     }
-
-
 }

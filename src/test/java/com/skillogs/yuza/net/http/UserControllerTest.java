@@ -2,51 +2,56 @@ package com.skillogs.yuza.net.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillogs.yuza.domain.User;
-
-import com.skillogs.yuza.net.http.UserDto;
 import com.skillogs.yuza.repository.UserRepository;
-import com.skillogs.yuza.security.StatelessAuthenticationFilter;
 import com.skillogs.yuza.security.TokenAuthenticationService;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.IsCollectionContaining.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 
-
+@Import(UserMapperImpl.class)
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
-@WebMvcTest(value = UserController.class, secure = false)
+@WebMvcTest(value = {UserController.class}, secure = false)
 public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
+    @Autowired private UserMapperImpl userMapper;
+
+    @MockBean private UserDetailsService detailsService;
     @MockBean private UserRepository userRepository;
-    @MockBean private TokenAuthenticationService authenticationService;
+    @MockBean private TokenAuthenticationService tkpv;
+
+
 
     private User createUser() {
         User john = new User();
@@ -61,8 +66,15 @@ public class UserControllerTest {
 
     @Before
     public void setup() {
-        when(authenticationService.getAuthentication(Mockito.any()))
-                .thenReturn(new TestingAuthenticationToken("aze@æze.fr", null));
+
+        TestingAuthenticationToken auth = new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN");
+        when(tkpv.getAuthentication(Mockito.any())).thenReturn(auth);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @After
+    public void clean() {
+        SecurityContextHolder.clearContext();
     }
 
 
@@ -80,6 +92,7 @@ public class UserControllerTest {
         mvc.perform(get(UserController.URI))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.numberOfElements").value(1))
                 .andExpect(jsonPath("$.content.[0].id").value("id"));
 
@@ -102,9 +115,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
-        ;
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
 
         verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
@@ -148,9 +159,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("new_id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")))
-                ;
+                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")));
 
         verify(userRepository).countByEmail(user.getEmail());
         verify(userRepository).save(user);
@@ -189,9 +198,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id", is("id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
                 .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")))
-        ;
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
 
         verify(userRepository).findById(user.getId());
         verify(userRepository).save(user);
@@ -302,8 +309,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id").doesNotExist())
                 .andExpect(jsonPath("$").isArray());
 
-        ;
-
         verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
 
@@ -335,8 +340,7 @@ public class UserControllerTest {
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").doesNotExist())
-                .andExpect(jsonPath("$").isArray())
-        ;
+                .andExpect(jsonPath("$").isArray());
 
         verify(userRepository).findById(user.getId());
         verify(userRepository).save(user);
@@ -370,8 +374,7 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").doesNotExist())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty())
-        ;
+                .andExpect(jsonPath("$").isEmpty());
 
         verify(userRepository).findById(user.getId());
         verify(userRepository).save(user);
@@ -388,8 +391,7 @@ public class UserControllerTest {
         mvc.perform(
                 delete(UserController.URI + "/{id}/courses/gniiiii", user.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
 
         verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
@@ -413,8 +415,7 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").doesNotExist())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty())
-        ;
+                .andExpect(jsonPath("$").isEmpty());
 
         verify(userRepository).findById(user.getId());
         verify(userRepository).save(user);
@@ -441,9 +442,11 @@ public class UserControllerTest {
         User user = new User();
         user.setFirstName("bob");
         //when
-        UserDto userDto = UserMapper.INSTANCE.userToUserDto(user);
+
+        UserDto userDto = userMapper.toDTO(user);
         //then
         assertThat(userDto.getFirstName(), is("bob"));
+
     }
 
 
