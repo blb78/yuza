@@ -165,6 +165,16 @@ public class UserControllerTest {
     // =========================================== Create New User ========================================
 
     @Test
+    public void failed_to_delete_user() throws Exception {
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
+
+        mvc.perform(
+                delete(UserController.URI+"/{id}", "some_user_id"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void should_create_instructor() throws Exception {
         when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
