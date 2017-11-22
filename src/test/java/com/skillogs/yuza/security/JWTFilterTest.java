@@ -46,13 +46,13 @@ public class JWTFilterTest {
     }
 
     @Test
-    public void should_returns_ok__when_authentification() throws IOException, ServletException {
+    public void should_returns_ok_when_authentification() throws IOException, ServletException {
         MockFilterChain mockChain = new MockFilterChain();
         MockHttpServletRequest req = new MockHttpServletRequest();
         MockHttpServletResponse res = new MockHttpServletResponse();
 
         when(tokenProvider.getAuthentication(req))
-                .thenReturn(new TestingAuthenticationToken("address@host.com", null));
+                .thenReturn(new TestingAuthenticationToken("address@host.com", null, "SOME_ROLE"));
 
         filter.doFilter(req, res, mockChain);
 
