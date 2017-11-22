@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,18 +36,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class})
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
-@WebMvcTest(value = {UserController.class})
+@WebMvcTest(UserController.class)
 public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
     @Autowired private UserMapperImpl userMapper;
 
-
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
-
-
 
     private User createUser() {
         User john = new User();
@@ -63,12 +59,9 @@ public class UserControllerTest {
 
     @Before
     public void setup() {
-
-        Authentication auth = new TestingAuthenticationToken("aze@aze.fr", null, "USER");
-        when(tkpv.getAuthentication(Mockito.any())).thenReturn(auth);
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
     }
-
-    // =========================================== Get All Users ==========================================
 
     @Test
     public void get_all_success() throws Exception {
@@ -88,9 +81,6 @@ public class UserControllerTest {
         verify(userRepository).findAll(Mockito.any(Pageable.class));
         verifyNoMoreInteractions(userRepository);
     }
-
-
-    // =========================================== Get User By ID =========================================
 
     @Test
     public void get_by_id_success() throws Exception {
@@ -112,7 +102,6 @@ public class UserControllerTest {
 
     @Test
     public void get_by_id_fail_404_not_found() throws Exception {
-
         when(userRepository.findById("gnii")).thenReturn(null);
 
         mvc.perform(get(UserController.URI+"/{id}", "gnii"))
@@ -121,8 +110,6 @@ public class UserControllerTest {
         verify(userRepository).findById("gnii");
         verifyNoMoreInteractions(userRepository);
     }
-
-    // =========================================== Create New User ========================================
 
     @Test
     public void create_user_success() throws Exception {
@@ -133,7 +120,7 @@ public class UserControllerTest {
         user.setLastName("Doe");
         user.setEmail("doe.doe@exemple.com");
 
-        when(userRepository.countByEmail(user.getEmail())).thenReturn((long) 0);
+        when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
         when(userRepository.save(user)).thenAnswer(a -> {
             User userToSave = a.getArgumentAt(0, User.class);
             userToSave.setId("new_id");
@@ -155,11 +142,80 @@ public class UserControllerTest {
         verifyNoMoreInteractions(userRepository);
     }
 
+
+    @Test
+    public void should_get_all_success_with_admin_role() throws Exception {
+        when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
+        User john1 = createUser();
+        List<User> list = new ArrayList<>();
+        list.add(john1);
+        Page<User> page = new PageImpl<>(list);
+        when(userRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
+
+        mvc.perform(get(UserController.URI))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.numberOfElements").value(1))
+                .andExpect(jsonPath("$.content.[0].id").value("id"));
+
+        verify(userRepository).findAll(Mockito.any(Pageable.class));
+        verifyNoMoreInteractions(userRepository);
+    }
+    // =========================================== Create New User ========================================
+
+    @Test
+    public void should_create_instructor() throws Exception {
+        when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
+
+        User user = new User();
+
+        user.setFirstName("John");
+        user.setPassword("password");
+        user.setLastName("Doe");
+        user.setEmail("doe.doe@exemple.com");
+        user.addRole("INSTRUCTOR");
+
+        when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
+        when(userRepository.save(user)).thenAnswer(a -> {
+            User u = a.getArgumentAt(0, User.class);
+            u.setId("new_id");
+            return u;
+        });
+
+        mvc.perform(
+                post(UserController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("new_id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.email", is("doe.doe@exemple.com")));
+
+        verify(userRepository).countByEmail(user.getEmail());
+        verify(userRepository).save(user);
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void failed_to_create_instructor() throws Exception {
+        when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
+
+        mvc.perform(
+                post(UserController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(new User())))
+                .andExpect(status().isForbidden());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+
     @Test
     public void test_create_user_fail_409_conflict() throws Exception {
         User user = createUser();
 
-        when(userRepository.countByEmail(user.getEmail())).thenReturn((long) 1);
+        when(userRepository.countByEmail(user.getEmail())).thenReturn(1L);
 
         mvc.perform(
                 post("/users")
@@ -171,7 +227,6 @@ public class UserControllerTest {
         verifyNoMoreInteractions(userRepository);
     }
 
-    // =========================================== Update User ===================================
     @Test
     public void update_user_success() throws Exception {
         User user = createUser();
@@ -238,7 +293,6 @@ public class UserControllerTest {
         verifyNoMoreInteractions(userRepository);
     }
 
-    // =========================================== Authenticate User ===================================
     @Test
     public void authentication_success() throws Exception {
 
@@ -262,10 +316,10 @@ public class UserControllerTest {
         verifyNoMoreInteractions(userRepository);
 
     }
+
     @Test
     public void authentication_fail_404_not_found() throws Exception {
 
-        User john = createUser();
         UserController.UserCredentials user = new UserController.UserCredentials();
         user.setEmail("gniii@gniii.com");
         user.setPassword("gniii");
@@ -291,8 +345,6 @@ public class UserControllerTest {
         User user = createUser();
         when(userRepository.findById(user.getId())).thenReturn(user);
 
-
-
         mvc.perform(get(UserController.URI+"/{id}/courses", user.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").doesNotExist())
@@ -304,7 +356,6 @@ public class UserControllerTest {
     }
     @Test
     public void get_courses_fail_404_not_found() throws Exception {
-
         when(userRepository.findById("gnii")).thenReturn(null);
 
         mvc.perform(get(UserController.URI+"/{id}", "gnii"))
@@ -312,9 +363,8 @@ public class UserControllerTest {
 
         verify(userRepository).findById("gnii");
         verifyNoMoreInteractions(userRepository);
-
     }
-    // =========================================== Add Course User ===================================
+
     @Test
     public void add_courses_success() throws Exception {
         User user = createUser();
@@ -338,7 +388,6 @@ public class UserControllerTest {
     }
     @Test
     public void add_courses_fail_404_not_found() throws Exception {
-
         when(userRepository.findById("gnii")).thenReturn(null);
 
         mvc.perform(put(UserController.URI+"/{id}/courses/{course}", "gnii","bla"))
@@ -346,9 +395,8 @@ public class UserControllerTest {
 
         verify(userRepository).findById("gnii");
         verifyNoMoreInteractions(userRepository);
-
     }
-    // =========================================== Delete Course User ===================================
+
     @Test
     public void delete_courses_success() throws Exception {
         User user = createUser();
@@ -370,6 +418,7 @@ public class UserControllerTest {
         verifyNoMoreInteractions(userRepository);
 
     }
+
     @Test
     public void delete_courses_fail_404_not_found() throws Exception {
         User user = createUser();
@@ -384,10 +433,7 @@ public class UserControllerTest {
 
         verify(userRepository).findById(user.getId());
         verifyNoMoreInteractions(userRepository);
-
     }
-
-    // =========================================== Delete ALL Courses User ===================================
 
     @Test
     public void delete_all_courses_success() throws Exception {
@@ -409,8 +455,8 @@ public class UserControllerTest {
         verify(userRepository).findById(user.getId());
         verify(userRepository).save(user);
         verifyNoMoreInteractions(userRepository);
-
     }
+
     @Test
     public void delete_all_courses_fail_404_not_found() throws Exception {
 
@@ -421,22 +467,16 @@ public class UserControllerTest {
 
         verify(userRepository).findById("gnii");
         verifyNoMoreInteractions(userRepository);
-
     }
-
 
     @Test
     public void shouldMapUserToDto() {
-        //given
         User user = new User();
         user.setFirstName("bob");
-        //when
 
         UserDto userDto = userMapper.toDTO(user);
-        //then
+
         assertThat(userDto.getFirstName(), is("bob"));
-
     }
-
 
 }
