@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @GetMapping
-    @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('USER')")
     public Page<UserDto> findAll(Pageable pageable){
         return repository.findAll(pageable).map(userMapper::toDTO);
     }
@@ -63,7 +63,7 @@ public class UserController {
         User currentUser = repository.findById(id);
 
         if (currentUser == null){
-            return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return Optional.ofNullable(repository.save(user))
                 .map(ResponseEntity::ok)
@@ -126,8 +126,8 @@ public class UserController {
         if (user == null){
             throw new ApiNotFoundException();
         }
-        Set hSet = user.getCourses();
-        if (!hSet.contains(new String(course))){
+        Set<String> hSet = user.getCourses();
+        if (!hSet.contains(course)){
             throw new ApiCourseNotFoundException();
         }
 

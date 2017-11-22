@@ -1,19 +1,18 @@
 package com.skillogs.yuza.net.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skillogs.yuza.config.SecurityConfiguration;
+import com.skillogs.yuza.config.WebConfiguration;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -21,8 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,18 +34,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@Import(UserMapperImpl.class)
+@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class})
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
-@WebMvcTest(value = {UserController.class}, secure = false)
+@WebMvcTest(value = {UserController.class})
 public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
     @Autowired private UserMapperImpl userMapper;
 
-    @MockBean private UserDetailsService detailsService;
+
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
 
@@ -67,26 +64,18 @@ public class UserControllerTest {
     @Before
     public void setup() {
 
-        TestingAuthenticationToken auth = new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN");
+        Authentication auth = new TestingAuthenticationToken("aze@aze.fr", null, "USER");
         when(tkpv.getAuthentication(Mockito.any())).thenReturn(auth);
-        SecurityContextHolder.getContext().setAuthentication(auth);
     }
-
-    @After
-    public void clean() {
-        SecurityContextHolder.clearContext();
-    }
-
-
 
     // =========================================== Get All Users ==========================================
 
     @Test
     public void get_all_success() throws Exception {
         User john1 = createUser();
-        List<User> list = new ArrayList<User>();
+        List<User> list = new ArrayList<>();
         list.add(john1);
-        Page<User> page = new PageImpl<User>(list);
+        Page<User> page = new PageImpl<>(list);
         when(userRepository.findAll(Mockito.any(Pageable.class))).thenReturn(page);
 
         mvc.perform(get(UserController.URI))
