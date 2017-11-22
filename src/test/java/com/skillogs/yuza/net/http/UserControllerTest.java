@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
 import com.skillogs.yuza.domain.User;
+import com.skillogs.yuza.net.dto.UserDto;
+import com.skillogs.yuza.net.dto.UserMapperImpl;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.junit.Before;

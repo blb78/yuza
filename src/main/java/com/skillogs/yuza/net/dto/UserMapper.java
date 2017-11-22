@@ -1,4 +1,4 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.net.dto;
 
 
 import com.skillogs.yuza.domain.User;

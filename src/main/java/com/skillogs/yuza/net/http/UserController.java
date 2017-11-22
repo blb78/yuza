@@ -3,6 +3,8 @@ package com.skillogs.yuza.net.http;
 
 
 import com.skillogs.yuza.domain.User;
+import com.skillogs.yuza.net.dto.UserDto;
+import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
