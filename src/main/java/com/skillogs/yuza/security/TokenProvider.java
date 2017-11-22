@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,7 +31,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,8 +44,7 @@ public class TokenProvider implements TokenAuthenticationService{
 
     @Autowired
     public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
-                         @Value("${key.rsa.public}") String keyPub)throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
-
+                         @Value("${key.rsa.public}") String keyPub) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         Algorithm a = Algorithm.RSA256(
                 getPublicKey(keyPub),
                 getPrivateKey(keyPriv));
@@ -60,8 +57,8 @@ public class TokenProvider implements TokenAuthenticationService{
         if (token== null) return null;
         List<SimpleGrantedAuthority> authorities = token.getClaim("roles").asList(SimpleGrantedAuthority.class);
 
-
         User principal = new User(token.getClaim("email").asString());
+        principal.setId(token.getClaim("iss").asString());
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }

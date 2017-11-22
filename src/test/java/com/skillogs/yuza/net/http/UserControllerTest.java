@@ -1,5 +1,6 @@
 package com.skillogs.yuza.net.http;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
@@ -22,12 +23,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -64,6 +68,35 @@ public class UserControllerTest {
     }
 
     @Test
+    public void should_endpoint_de_secured() throws JsonProcessingException {
+        Arrays.asList(
+                new TestCase("USER", delete(UserController.URI+"/some_user_id")),
+                new TestCase("USER", get(UserController.URI+"/some_user_id")),
+                new TestCase("USER", put(UserController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content("{}")),
+                new TestCase("USER", post(UserController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new User())))
+        ).forEach(TestCase::checkIsSecured);
+    }
+
+    class TestCase {
+        MockHttpServletRequestBuilder request;
+        String role;
+
+        TestCase(String role, MockHttpServletRequestBuilder request) {
+            this.request = request;
+            this.role = role;
+        }
+
+        void checkIsSecured(){
+            try {
+                when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, role));
+                mvc.perform(request).andExpect(status().isForbidden());
+            } catch (Exception e) {
+                fail(e.getMessage());
+            }
+        }
+    }
+
+    @Test
     public void get_all_success() throws Exception {
         User john1 = createUser();
         List<User> list = new ArrayList<>();
@@ -90,6 +123,25 @@ public class UserControllerTest {
 
         mvc.perform(get(UserController.URI+"/{id}", user.getId()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("id")))
+                .andExpect(jsonPath("$.firstName", is("John")))
+                .andExpect(jsonPath("$.lastName", is("Doe")))
+                .andExpect(jsonPath("$.email", is("john.doe@exemple.com")));
+
+        verify(userRepository).findById(user.getId());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void get_me_success() throws Exception {
+        User user = createUser();
+
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken(user, null));
+
+        when(userRepository.findById(user.getId())).thenReturn(user);
+
+        mvc.perform(get(UserController.URI+"/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is("id")))
                 .andExpect(jsonPath("$.firstName", is("John")))
@@ -164,15 +216,7 @@ public class UserControllerTest {
     }
     // =========================================== Create New User ========================================
 
-    @Test
-    public void failed_to_delete_user() throws Exception {
-        when(tkpv.getAuthentication(Mockito.any()))
-                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
 
-        mvc.perform(
-                delete(UserController.URI+"/{id}", "some_user_id"))
-                .andExpect(status().isForbidden());
-    }
 
     @Test
     public void should_create_instructor() throws Exception {
@@ -206,31 +250,6 @@ public class UserControllerTest {
         verify(userRepository).countByEmail(user.getEmail());
         verify(userRepository).save(user);
         verifyNoMoreInteractions(userRepository);
-    }
-
-    @Test
-    public void failed_to_create_instructor() throws Exception {
-        when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
-
-        mvc.perform(
-                post(UserController.URI )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(new User())))
-                .andExpect(status().isForbidden());
-
-        verifyNoMoreInteractions(userRepository);
-    }
-
-    @Test
-    public void failed_to_update_user() throws Exception {
-        when(tkpv.getAuthentication(Mockito.any()))
-                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
-
-        mvc.perform(
-                put(UserController.URI+"/{id}", "some_user_id")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{}"))
-                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -270,6 +289,7 @@ public class UserControllerTest {
         verify(userRepository).save(user);
         verifyNoMoreInteractions(userRepository);
     }
+
     @Test
     public void update_user_fail_404_not_found() throws Exception {
         User user = createUser();
@@ -300,6 +320,7 @@ public class UserControllerTest {
         verify(userRepository).delete(user);
         verifyNoMoreInteractions(userRepository);
     }
+
     @Test
     public void test_delete_user_fail_404_not_found() throws Exception {
         User user = new User();
