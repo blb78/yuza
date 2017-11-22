@@ -35,12 +35,13 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
     public Page<UserDto> findAll(Pageable pageable){
         return repository.findAll(pageable).map(userMapper::toDTO);
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     public User createUser(@RequestBody User user)  {
 
         if (repository.countByEmail(user.getEmail())>0) {
@@ -49,6 +50,7 @@ public class UserController {
 
         return repository.save(user);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> findUser(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
