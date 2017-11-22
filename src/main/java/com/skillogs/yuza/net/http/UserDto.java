@@ -1,5 +1,8 @@
 package com.skillogs.yuza.net.http;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class UserDto {
 
     private String id;
@@ -9,6 +12,7 @@ public class UserDto {
     private String city;
     private String country;
     private long birthday;
+    private Set<String> roles = new HashSet<String>();
 
     public UserDto() {
     }
@@ -67,5 +71,17 @@ public class UserDto {
 
     public void setBirthday(long birthday) {
         this.birthday = birthday;
+    }
+
+    public Set<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
+    }
+
+    public void addRole(String role){
+        this.roles.add(role);
     }
 }

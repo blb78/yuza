@@ -58,11 +58,7 @@ public class TokenProvider implements TokenAuthenticationService{
     public Authentication getAuthentication(HttpServletRequest req) {
         DecodedJWT token = isValid(req.getHeader(AUTHORISATION_HEADER));
         if (token== null) return null;
-
-        List<GrantedAuthority> authorities =
-                Arrays.stream(token.getClaim("roles").toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        List<SimpleGrantedAuthority> authorities = token.getClaim("roles").asList(SimpleGrantedAuthority.class);
 
 
         User principal = new User(token.getClaim("email").asString());
