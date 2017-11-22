@@ -60,6 +60,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user){
         user.setId(id);
         User currentUser = repository.findById(id);
@@ -73,6 +74,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     public void  deleteUser(@PathVariable String id)  {
         User user = repository.findById(id);
         if (user == null){

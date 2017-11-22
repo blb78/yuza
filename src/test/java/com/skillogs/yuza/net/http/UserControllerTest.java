@@ -222,6 +222,18 @@ public class UserControllerTest {
     }
 
     @Test
+    public void failed_to_update_user() throws Exception {
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "USER"));
+
+        mvc.perform(
+                put(UserController.URI+"/{id}", "some_user_id")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void test_create_user_fail_409_conflict() throws Exception {
         User user = createUser();
 
