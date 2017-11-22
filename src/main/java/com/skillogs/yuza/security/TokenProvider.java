@@ -36,11 +36,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class TokenProvider implements TokenAuthenticationService{
+public class TokenProvider implements TokenAuthenticationService {
 
-    private  JWTVerifier verifier;
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String AUTHORISATION_HEADER = "Authorization";
+
+    private final JWTVerifier verifier;
+    private final KeyFactory keyFactory;
 
     @Autowired
     public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
@@ -49,6 +51,7 @@ public class TokenProvider implements TokenAuthenticationService{
                 getPublicKey(keyPub),
                 getPrivateKey(keyPriv));
         this.verifier = JWT.require(a).build();
+        this.keyFactory = KeyFactory.getInstance("RSA");
     }
 
     @Override
@@ -64,27 +67,27 @@ public class TokenProvider implements TokenAuthenticationService{
     }
 
     private DecodedJWT isValid(String token) {
+        if (StringUtils.isEmpty(token)) return null;
         try {
-            if (StringUtils.isEmpty(token)) return null;
-            return  verifier.verify(token.replace(TOKEN_PREFIX, ""));
-        } catch (JWTVerificationException  exception){
+            return verifier.verify(token.replace(TOKEN_PREFIX, ""));
+        } catch (JWTVerificationException exception){
             return null;
         }
     }
-    private static RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+    private RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
         String publicKeyContent = new String(encoded);
 
-        publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");;
-
-        KeyFactory kf = KeyFactory.getInstance("RSA");
+        publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
 
         X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
-        return (RSAPublicKey) kf.generatePublic(keySpecX509);
+        return (RSAPublicKey) keyFactory.generatePublic(keySpecX509);
     }
-    private static RSAPrivateKey getPrivateKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+    private RSAPrivateKey getPrivateKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
         String privateKeyContent = new String(encoded);
@@ -104,14 +107,7 @@ public class TokenProvider implements TokenAuthenticationService{
         ASN1Sequence seq = new DERSequence(v);
         byte[] privKey = seq.getEncoded("DER");
 
-        PKCS8EncodedKeySpec spec = new  PKCS8EncodedKeySpec(privKey);
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        return (RSAPrivateKey) fact.generatePrivate(spec);
-    }
-
-    private static String read(InputStream input) throws IOException {
-        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
-            return buffer.lines().collect(Collectors.joining("\n"));
-        }
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privKey);
+        return (RSAPrivateKey) keyFactory.generatePrivate(spec);
     }
 }

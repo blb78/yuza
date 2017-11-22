@@ -26,18 +26,18 @@ public class JWTFilter extends GenericFilterBean {
     }
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request,
+                         ServletResponse response,
+                         FilterChain filterChain) throws IOException, ServletException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
-        Authentication authentication = this.tokenProvider.getAuthentication(httpRequest);
-        if (authentication == null){
-            HttpServletResponse r = (HttpServletResponse) servletResponse;
+        Authentication auth = this.tokenProvider.getAuthentication((HttpServletRequest) request);
+        if (auth == null || !auth.isAuthenticated()) {
+            HttpServletResponse r = (HttpServletResponse) response;
             r.setStatus(HttpStatus.UNAUTHORIZED.value());
             return;
         }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        filterChain.doFilter(servletRequest, servletResponse);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        filterChain.doFilter(request, response);
     }
 
 }

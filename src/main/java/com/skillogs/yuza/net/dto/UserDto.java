@@ -12,10 +12,7 @@ public class UserDto {
     private String city;
     private String country;
     private long birthday;
-    private Set<String> roles = new HashSet<String>();
-
-    public UserDto() {
-    }
+    private Set<String> roles = new HashSet<>();
 
     public String getId() {
         return id;
