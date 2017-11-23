@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,14 +47,14 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public User createUser(@RequestBody User user)  {
+    public UserDto createUser(@Valid @RequestBody UserDto user)  {
         if (!areValid(user.getRoles())){
             throw new ApiBadRequestException();
         }
         if (repository.countByEmail(user.getEmail())>0) {
             throw new ApiConflictException();
         }
-        return repository.save(user);
+        return userMapper.toDTO(repository.save(userMapper.to(user)));
     }
 
     private boolean areValid(Set<String> roles) {
@@ -80,14 +81,14 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user){
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody UserDto user){
         user.setId(id);
         User currentUser = repository.findById(id);
 
         if (currentUser == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return Optional.ofNullable(repository.save(user))
+        return Optional.ofNullable(repository.save(userMapper.to(user)))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

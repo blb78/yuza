@@ -28,11 +28,12 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -53,12 +54,12 @@ public class UserControllerTest {
     @MockBean private TokenAuthenticationService tkpv;
 
     private User createUser() {
-        User john = new User();
+        User john = new User("john.doe@exemple.com");
         john.setId("id");
         john.setFirstName("John");
         john.setPassword("password");
         john.setLastName("Doe");
-        john.setEmail("john.doe@exemple.com");
+        john.addRole(Role.STUDENT);
         return john;
     }
 
@@ -74,8 +75,8 @@ public class UserControllerTest {
         Arrays.asList(
                 new TestCase(Role.STUDENT, delete(UserController.URI+"/some_user_id")),
                 new TestCase(Role.STUDENT, get(UserController.URI+"/some_user_id")),
-                new TestCase(Role.STUDENT, put(UserController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content("{}")),
-                new TestCase(Role.STUDENT, post(UserController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new User())))
+                new TestCase(Role.STUDENT, put(UserController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createUser()))),
+                new TestCase(Role.STUDENT, post(UserController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createUser())))
         ).forEach(TestCase::checkIsSecured);
     }
 
@@ -150,16 +151,14 @@ public class UserControllerTest {
 
     @Test
     public void should_create_user() throws Exception {
-        User user = new User();
-
-        user.setFirstName("John");
-        user.setPassword("password");
-        user.setLastName("Doe");
-        user.setEmail("doe.doe@exemple.com");
+        User user = createUser();
 
         when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
         when(userRepository.save(user)).thenAnswer(a -> {
             User userToSave = a.getArgumentAt(0, User.class);
+            if (StringUtils.isEmpty(userToSave.getPassword())) {
+                fail("Password is needed when creating user");
+            }
             userToSave.setId("new_id");
             return userToSave;
         });
@@ -167,54 +166,45 @@ public class UserControllerTest {
         mvc.perform(
                 post(UserController.URI )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
+                        .content(mapper.writeValueAsString(userMapper.toDTOWithPassword(user))))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.id",         is("new_id")))
                 .andExpect(jsonPath("$.firstName",  is("John")))
+                .andExpect(jsonPath("$.roles",      hasItem(Role.STUDENT.name())))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
-                .andExpect(jsonPath("$.email",      is("doe.doe@exemple.com")));
+                .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
     }
+
+
     @Test
-    public void should_create_student() throws Exception {
-        User user = new User();
-
-        user.setFirstName("John");
-        user.setPassword("password");
-        user.setLastName("Doe");
-        user.setEmail("doe.doe@exemple.com");
-        user.addRole("STUDENT");
-
-        when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
-        when(userRepository.save(user)).thenAnswer(a -> {
-            User userToSave = a.getArgumentAt(0, User.class);
-            userToSave.setId("new_id");
-            return userToSave;
-        });
+    public void failed_to_create_user_with_validation() throws Exception {
+        UserDto emptyUser = new UserDto();
+        emptyUser.setEmail("toto");
 
         mvc.perform(
                 post(UserController.URI )
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id",         is("new_id")))
-                .andExpect(jsonPath("$.firstName",  is("John")))
-                .andExpect(jsonPath("$.lastName",   is("Doe")))
-                .andExpect(jsonPath("$.email",      is("doe.doe@exemple.com")));
+                        .content(mapper.writeValueAsString(emptyUser)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$",            hasSize(5)))
+                .andExpect(jsonPath("$..field",     containsInAnyOrder("email", "firstName", "lastName", "password", "roles")))
+                .andExpect(jsonPath("$..message",   containsInAnyOrder("Email", "NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty")));
+
+        verifyZeroInteractions(userRepository);
     }
 
     @Test
     public void failed_to_create_user_with_unkown_roles() throws Exception {
-        User user = new User();
+        UserDto user = new UserDto();
         user.addRole("USER");
         user.addRole("MAGICIEN");
-
         user.setFirstName("John");
-        user.setPassword("password");
         user.setLastName("Doe");
-        user.setEmail("doe.doe@exemple.com");
+        user.setEmail("john.doe@exemple.com");
 
         mvc.perform(
-                post(UserController.URI )
+                post(UserController.URI)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isBadRequest());
@@ -245,13 +235,8 @@ public class UserControllerTest {
     public void should_create_instructor() throws Exception {
         when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
-        User user = new User();
-
-        user.setFirstName("John");
-        user.setPassword("password");
-        user.setLastName("Doe");
-        user.setEmail("doe.doe@exemple.com");
-        user.addRole("INSTRUCTOR");
+        User user = createUser();
+        user.addRole(Role.INSTRUCTOR);
 
         when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
         when(userRepository.save(user)).thenAnswer(a -> {
@@ -268,7 +253,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.id",         is("new_id")))
                 .andExpect(jsonPath("$.firstName",  is("John")))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
-                .andExpect(jsonPath("$.email",      is("doe.doe@exemple.com")));
+                .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
     }
 
     @Test
@@ -498,12 +483,13 @@ public class UserControllerTest {
 
     @Test
     public void shouldMapUserToDto() {
-        User user = new User();
+        User user = new User("john.doe@exemple.com");
         user.setFirstName("bob");
 
         UserDto userDto = userMapper.toDTO(user);
 
-        assertThat(userDto.getFirstName(), is("bob"));
+        assertThat(userDto.getFirstName(),  is("bob"));
+        assertThat(userDto.getEmail(),      is("john.doe@exemple.com"));
     }
 
 }

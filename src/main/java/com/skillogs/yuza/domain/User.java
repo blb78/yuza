@@ -20,15 +20,11 @@ public class User  {
     private String city;
     private String country;
     private Set<String> courses = new HashSet<>();
-    private Set<String> roles = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
     private long birthday;
-    @JsonIgnore
     private String picture;
-    @JsonIgnore
     private boolean enabled = true;
-    @JsonIgnore
     private boolean locked = false;
-    @JsonIgnore
     private long createdAt  = System.currentTimeMillis();
 
     public User(String email) {
@@ -36,7 +32,7 @@ public class User  {
     }
 
     public User() {
-
+        // NOTE : for bean convention
     }
 
 
@@ -145,14 +141,15 @@ public class User  {
         this.courses.add(course);
     }
 
-    public Set<String> getRoles() {
+    public Set<Role> getRoles() {
         return roles;
     }
 
-    public void setRoles(Set<String> roles) {
+    public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
-    public void addRole(String role){
+
+    public void addRole(Role role){
         this.roles.add(role);
     }
 
