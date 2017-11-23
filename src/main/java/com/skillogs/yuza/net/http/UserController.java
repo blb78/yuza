@@ -39,7 +39,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('INSTRUCTOR','ADMIN')")
     public Page<UserDto> findAll(Pageable pageable){
         return repository.findAll(pageable).map(userMapper::toDTO);
     }

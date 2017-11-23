@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
+import com.skillogs.yuza.domain.Role;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
@@ -71,25 +72,25 @@ public class UserControllerTest {
     @Test
     public void should_endpoint_de_secured() throws JsonProcessingException {
         Arrays.asList(
-                new TestCase("USER", delete(UserController.URI+"/some_user_id")),
-                new TestCase("USER", get(UserController.URI+"/some_user_id")),
-                new TestCase("USER", put(UserController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content("{}")),
-                new TestCase("USER", post(UserController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new User())))
+                new TestCase(Role.STUDENT, delete(UserController.URI+"/some_user_id")),
+                new TestCase(Role.STUDENT, get(UserController.URI+"/some_user_id")),
+                new TestCase(Role.STUDENT, put(UserController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content("{}")),
+                new TestCase(Role.STUDENT, post(UserController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new User())))
         ).forEach(TestCase::checkIsSecured);
     }
 
     class TestCase {
         MockHttpServletRequestBuilder request;
-        String role;
+        Role role;
 
-        TestCase(String role, MockHttpServletRequestBuilder request) {
+        TestCase(Role role, MockHttpServletRequestBuilder request) {
             this.request = request;
             this.role = role;
         }
 
         void checkIsSecured(){
             try {
-                when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, role));
+                when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, role.name()));
                 mvc.perform(request).andExpect(status().isForbidden());
             } catch (Exception e) {
                 fail(e.getMessage());
@@ -155,6 +156,33 @@ public class UserControllerTest {
         user.setPassword("password");
         user.setLastName("Doe");
         user.setEmail("doe.doe@exemple.com");
+
+        when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
+        when(userRepository.save(user)).thenAnswer(a -> {
+            User userToSave = a.getArgumentAt(0, User.class);
+            userToSave.setId("new_id");
+            return userToSave;
+        });
+
+        mvc.perform(
+                post(UserController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id",         is("new_id")))
+                .andExpect(jsonPath("$.firstName",  is("John")))
+                .andExpect(jsonPath("$.lastName",   is("Doe")))
+                .andExpect(jsonPath("$.email",      is("doe.doe@exemple.com")));
+    }
+    @Test
+    public void should_create_student() throws Exception {
+        User user = new User();
+
+        user.setFirstName("John");
+        user.setPassword("password");
+        user.setLastName("Doe");
+        user.setEmail("doe.doe@exemple.com");
+        user.addRole("STUDENT");
 
         when(userRepository.countByEmail(user.getEmail())).thenReturn(0L);
         when(userRepository.save(user)).thenAnswer(a -> {
