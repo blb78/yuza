@@ -10,6 +10,8 @@ import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.dto.UserMapperImpl;
+import com.skillogs.yuza.net.validator.CreateUserValidator;
+import com.skillogs.yuza.net.validator.UserValidator;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.junit.Before;
@@ -40,7 +42,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class})
+@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class, UserValidator.class, CreateUserValidator.class})
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
 @WebMvcTest(UserController.class)
@@ -272,6 +274,7 @@ public class UserControllerTest {
     @Test
     public void should_update_user() throws Exception {
         User user = createUser();
+        user.setPassword(null);
 
         when(userRepository.findById(user.getId())).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
@@ -279,7 +282,7 @@ public class UserControllerTest {
         mvc.perform(
                 put(UserController.URI + "/{id}", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
+                        .content(mapper.writeValueAsString(userMapper.toDTO(user))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id",         is("id")))
                 .andExpect(jsonPath("$.firstName",  is("John")))

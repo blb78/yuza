@@ -1,9 +1,6 @@
 package com.skillogs.yuza.net.http;
 
-import com.skillogs.yuza.net.exception.ApiBadRequestException;
-import com.skillogs.yuza.net.exception.ApiConflictException;
-import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
-import com.skillogs.yuza.net.exception.ApiNotFoundException;
+import com.skillogs.yuza.net.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -51,6 +48,14 @@ class GlobalControllerExceptionHandler {
                 .map(fieldError -> new ValidationError(fieldError.getField(), fieldError.getCode()))
                 .collect(Collectors.toList()));
     }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<List<ValidationError>> handleValidationException(ValidationException exception)  {
+        return ResponseEntity.badRequest().body(exception.getErrors().stream()
+                .map(err -> new ValidationError(err.getField(), err.getMessage()))
+                .collect(Collectors.toList()));
+    }
+
 
 
     static class ValidationError {

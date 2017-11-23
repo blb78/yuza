@@ -1,31 +1,26 @@
 package com.skillogs.yuza.net.dto;
 
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.NotEmpty;
-
-import javax.validation.constraints.Min;
 import java.util.HashSet;
 import java.util.Set;
 
 public class UserDto {
 
     private String id;
-    @NotEmpty
-    @Email
+
     private String email;
-    @NotEmpty
+
     private String firstName;
-    @NotEmpty
+
     private String lastName;
 
     private String city;
 
     private String country;
-    @NotEmpty
+
     private String password;
 
     private long birthday;
-    @NotEmpty
+
     private Set<String> roles = new HashSet<>();
 
     public String getId() {

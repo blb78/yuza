@@ -1,17 +1,16 @@
 package com.skillogs.yuza.net.http;
 
 
-
-import com.skillogs.yuza.domain.Role;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
-import com.skillogs.yuza.net.exception.ApiBadRequestException;
-import com.skillogs.yuza.net.exception.ApiConflictException;
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
+import com.skillogs.yuza.net.validator.CreateUserValidator;
+import com.skillogs.yuza.net.validator.UserValidator;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,23 +19,32 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 
 
 @RestController
 @RequestMapping(UserController.URI)
 public class UserController {
+
     public static final String URI = "/users";
 
     private final UserRepository repository;
     private final UserMapper userMapper;
+    private final UserValidator userValidator;
+    private final CreateUserValidator createUserValidator;
+
 
     @Autowired
-    public UserController(UserRepository repository, UserMapper userMapper) {
+    public UserController(UserRepository repository,
+                          UserMapper userMapper,
+                          @Qualifier("userValidator") UserValidator userValidator,
+                          @Qualifier("createUserValidator") CreateUserValidator createUserValidator) {
         this.repository = repository;
         this.userMapper = userMapper;
+        this.userValidator = userValidator;
+        this.createUserValidator = createUserValidator;
     }
 
     @GetMapping
@@ -47,19 +55,9 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public UserDto createUser(@Valid @RequestBody UserDto user)  {
-        if (!areValid(user.getRoles())){
-            throw new ApiBadRequestException();
-        }
-        if (repository.countByEmail(user.getEmail())>0) {
-            throw new ApiConflictException();
-        }
+    public UserDto createUser(@RequestBody UserDto user)  {
+        createUserValidator.validate(user);
         return userMapper.toDTO(repository.save(userMapper.to(user)));
-    }
-
-    private boolean areValid(Set<String> roles) {
-        List<String> allRoles = Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toList());
-        return allRoles.containsAll(roles);
     }
 
     @GetMapping("/{id}")
@@ -84,10 +82,12 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody UserDto user){
         user.setId(id);
         User currentUser = repository.findById(id);
-
         if (currentUser == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        user.setPassword(currentUser.getPassword());
+
+        userValidator.validate(user);
         return Optional.ofNullable(repository.save(userMapper.to(user)))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
