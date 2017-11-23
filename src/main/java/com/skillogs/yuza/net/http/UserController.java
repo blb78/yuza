@@ -2,9 +2,11 @@ package com.skillogs.yuza.net.http;
 
 
 
+import com.skillogs.yuza.domain.Role;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
+import com.skillogs.yuza.net.exception.ApiBadRequestException;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
@@ -18,9 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -46,12 +47,18 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public User createUser(@RequestBody User user)  {
-
+        if (!areValid(user.getRoles())){
+            throw new ApiBadRequestException();
+        }
         if (repository.countByEmail(user.getEmail())>0) {
             throw new ApiConflictException();
         }
-
         return repository.save(user);
+    }
+
+    private boolean areValid(Set<String> roles) {
+        List<String> allRoles = Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toList());
+        return allRoles.containsAll(roles);
     }
 
     @GetMapping("/{id}")

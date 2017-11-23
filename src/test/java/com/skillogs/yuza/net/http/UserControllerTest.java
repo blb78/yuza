@@ -7,6 +7,7 @@ import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
+import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.dto.UserMapperImpl;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
@@ -28,9 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -48,7 +46,7 @@ public class UserControllerTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
-    @Autowired private UserMapperImpl userMapper;
+    @Autowired private UserMapper userMapper;
 
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
@@ -174,6 +172,25 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.firstName",  is("John")))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
                 .andExpect(jsonPath("$.email",      is("doe.doe@exemple.com")));
+    }
+
+    @Test
+    public void failed_to_create_user_with_unkown_roles() throws Exception {
+        User user = new User();
+        user.addRole("USER");
+        user.addRole("MAGICIEN");
+
+        user.setFirstName("John");
+        user.setPassword("password");
+        user.setLastName("Doe");
+        user.setEmail("doe.doe@exemple.com");
+
+        mvc.perform(
+                post(UserController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isBadRequest());
+        verifyZeroInteractions(userRepository);
     }
 
 

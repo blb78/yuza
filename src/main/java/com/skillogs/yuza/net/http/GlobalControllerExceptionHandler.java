@@ -1,5 +1,6 @@
 package com.skillogs.yuza.net.http;
 
+import com.skillogs.yuza.net.exception.ApiBadRequestException;
 import com.skillogs.yuza.net.exception.ApiConflictException;
 import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
 import com.skillogs.yuza.net.exception.ApiNotFoundException;
@@ -29,6 +30,10 @@ class GlobalControllerExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(value= HttpStatus.UNAUTHORIZED)
     public void AuthenticationException()  {  }
+
+    @ExceptionHandler(ApiBadRequestException.class)
+    @ResponseStatus(value= HttpStatus.BAD_REQUEST)
+    public void BadRequestException()  {  }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(value= HttpStatus.FORBIDDEN)

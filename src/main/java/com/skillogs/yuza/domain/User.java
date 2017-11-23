@@ -19,8 +19,8 @@ public class User  {
     private String lastName;
     private String city;
     private String country;
-    private Set<String> courses = new HashSet<String>();
-    private Set<String> roles = new HashSet<String>();
+    private Set<String> courses = new HashSet<>();
+    private Set<String> roles = new HashSet<>();
     private long birthday;
     @JsonIgnore
     private String picture;
