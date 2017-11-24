@@ -10,6 +10,7 @@ import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.dto.UserMapperImpl;
+import com.skillogs.yuza.net.http.user.UserController;
 import com.skillogs.yuza.net.validator.impl.UserValidator;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
@@ -359,117 +360,6 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isUnauthorized());
-    }
-    // =========================================== Courses User ===================================
-    @Test
-    public void should_get_courses_success() throws Exception {
-        User user = createUser();
-        when(userRepository.findById(user.getId())).thenReturn(user);
-
-        mvc.perform(get(UserController.URI+"/{id}/courses", user.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").doesNotExist())
-                .andExpect(jsonPath("$").isArray());
-    }
-
-    @Test
-    public void failed_to_get_courses_with_404_not_found() throws Exception {
-        when(userRepository.findById("unknown_id")).thenReturn(null);
-
-        mvc.perform(get(UserController.URI+"/unknown_id"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void add_courses_success() throws Exception {
-        User user = createUser();
-        user.follow("toto");
-
-        when(userRepository.findById(user.getId())).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-
-        mvc.perform(
-                put(UserController.URI + "/{id}/courses/toto", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").doesNotExist())
-                .andExpect(jsonPath("$").isArray());
-
-        verify(userRepository).findById(user.getId());
-        verify(userRepository).save(user);
-        verifyNoMoreInteractions(userRepository);
-
-    }
-    @Test
-    public void add_courses_fail_404_not_found() throws Exception {
-        when(userRepository.findById("gnii")).thenReturn(null);
-
-        mvc.perform(put(UserController.URI+"/{id}/courses/{course}", "gnii","bla"))
-                .andExpect(status().isNotFound());
-
-        verify(userRepository).findById("gnii");
-        verifyNoMoreInteractions(userRepository);
-    }
-
-    @Test
-    public void delete_courses_success() throws Exception {
-        User user = createUser();
-        user.follow("toto");
-
-        when(userRepository.findById(user.getId())).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-
-        mvc.perform(
-                delete(UserController.URI + "/{id}/courses/toto", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").doesNotExist())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-
-        verify(userRepository).findById(user.getId());
-        verify(userRepository).save(user);
-        verifyNoMoreInteractions(userRepository);
-
-    }
-
-    @Test
-    public void delete_courses_fail_404_not_found() throws Exception {
-        User user = createUser();
-        user.follow("math_course_id");
-
-        when(userRepository.findById(user.getId())).thenReturn(user);
-
-        mvc.perform(
-                delete(UserController.URI + "/{id}/courses/{courseId)", user.getId(), "unknown_id")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void should_delete_all_courses() throws Exception {
-        User user = createUser();
-        user.follow("math_course_id");
-        user.follow("java_course_id");
-
-        when(userRepository.findById(user.getId())).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
-
-        mvc.perform(
-                delete(UserController.URI + "/{id}/courses", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
-    }
-
-    @Test
-    public void failed_to_delete_all_courses_with_404() throws Exception {
-
-        when(userRepository.findById("unknown_id")).thenReturn(null);
-
-        mvc.perform(delete(UserController.URI+"/{id}/courses", "unknown_id"))
-                .andExpect(status().isNotFound());
     }
 
     @Test

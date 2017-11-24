@@ -1,4 +1,4 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.net.http.user;
 
 
 import com.skillogs.yuza.domain.User;
@@ -16,9 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
 
 @RestController
@@ -104,56 +102,6 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    @GetMapping("/{id}/courses")
-    public ResponseEntity<Set<String>> findCourses(@PathVariable String id)  {
-        return Optional.ofNullable(repository.findById(id))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}/courses")
-    public ResponseEntity unfollowAllCourses(@PathVariable String id)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        user.setCourses(Collections.emptySet());
-        return Optional.ofNullable(repository.save(user))
-                .map(u -> ResponseEntity.ok().build())
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> followCourse(@PathVariable String id, @PathVariable String course)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        user.follow(course);
-
-        return Optional.ofNullable(repository.save(user))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    
-    @DeleteMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> unfollowCourse(@PathVariable String id, @PathVariable String course)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        if (!user.isFollowing(course)){
-            return ResponseEntity.notFound().build();
-        }
-
-        user.unfollow(course);
-        return Optional.ofNullable(repository.save(user))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
 
     public static class UserCredentials {
         private String email;
