@@ -1,7 +1,6 @@
 package com.skillogs.yuza.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 

@@ -1,9 +1,10 @@
-package com.skillogs.yuza.net.validator;
+package com.skillogs.yuza.net.validator.impl;
 
 import com.skillogs.yuza.domain.Role;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.exception.ValidationException;
 import com.skillogs.yuza.net.exception.ValidatorError;
+import com.skillogs.yuza.net.validator.Validator;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -16,7 +17,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Component("userValidator")
+@Component
 public class UserValidator implements Validator<UserDto> {
 
     private final UserRepository repository;
@@ -41,7 +42,7 @@ public class UserValidator implements Validator<UserDto> {
             if (!areValid(user.getRoles())){
                 errors.add(new ValidatorError("roles", "Invalid"));
             }
-            if (repository.countByEmail(user.getEmail())>0) {
+            if (repository.countByEmail(user.getEmail()) > 0) {
                 errors.add(new ValidatorError("email", "AlreadyUsed"));
             }
         }

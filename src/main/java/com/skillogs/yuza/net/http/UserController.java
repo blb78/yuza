@@ -4,7 +4,7 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
-import com.skillogs.yuza.net.validator.UserValidator;
+import com.skillogs.yuza.net.validator.impl.UserValidator;
 import com.skillogs.yuza.net.validator.Validator;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
