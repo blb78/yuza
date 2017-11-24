@@ -19,9 +19,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
+import static com.skillogs.yuza.TestUtils.build;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.when;
@@ -147,14 +145,5 @@ public class CourseControllerTest {
 
         mvc.perform(delete(CourseController.URI, "unknown_id"))
                 .andExpect(status().isNotFound());
-    }
-
-    @SafeVarargs
-    private final <T> T build(Supplier<T> factory, Consumer<T>... cons) {
-        T instance = factory.get();
-        for (Consumer<T> con : cons) {
-            con.accept(instance);
-        }
-        return instance;
     }
 }

@@ -1,4 +1,4 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.net.http.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,8 @@ import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.dto.UserMapperImpl;
+import com.skillogs.yuza.net.exception.ValidationException;
+import com.skillogs.yuza.net.exception.ValidatorError;
 import com.skillogs.yuza.net.http.user.UserController;
 import com.skillogs.yuza.net.validator.impl.UserValidator;
 import com.skillogs.yuza.repository.UserRepository;
@@ -33,6 +35,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class, UserValidator.class})
+@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class})
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
 @WebMvcTest(UserController.class)
@@ -56,6 +59,7 @@ public class UserControllerTest {
 
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
+    @MockBean private UserValidator validator;
 
     @SafeVarargs
     private final User createUser(Consumer<User>... cons) {
@@ -188,32 +192,20 @@ public class UserControllerTest {
     @Test
     public void failed_to_create_user_with_validation() throws Exception {
         UserDto emptyUser = new UserDto();
-        emptyUser.setEmail("toto");
+
+        ValidationException exception = new ValidationException(Arrays.asList(
+                new ValidatorError("field1", "error1"),
+                new ValidatorError("field2", "error2")));
+        doThrow(exception).when(validator).validate(Mockito.any(UserDto.class));
 
         mvc.perform(
                 post(UserController.URI )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(emptyUser)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$",            hasSize(5)))
-                .andExpect(jsonPath("$..field",     containsInAnyOrder("email", "firstName", "lastName", "password", "roles")))
-                .andExpect(jsonPath("$..message",   containsInAnyOrder("EmailPattern", "NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty")));
-    }
-
-    @Test
-    public void failed_to_create_user_with_unknown_roles() throws Exception {
-        UserDto user = new UserDto();
-        user.addRole("USER");
-        user.addRole("MAGICIEN");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setEmail("john.doe@exemple.com");
-
-        mvc.perform(
-                post(UserController.URI)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isBadRequest());
+                .andExpect(jsonPath("$",            hasSize(2)))
+                .andExpect(jsonPath("$..field",     containsInAnyOrder("field1", "field2")))
+                .andExpect(jsonPath("$..message",   containsInAnyOrder("error1", "error2")));
     }
 
     @Test
@@ -255,21 +247,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.firstName",  is("John")))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
                 .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
-    }
-
-    @Test
-    public void failed_to_create_user_with_same_email_address() throws Exception {
-        User user = createUser(u->u.setId(null));
-
-        when(userRepository.countByEmail(user.getEmail())).thenReturn(1L);
-
-        mvc.perform(
-                post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$[0].field",   is("email")))
-                .andExpect(jsonPath("$[0].message", is("AlreadyUsed")));
     }
 
     @Test

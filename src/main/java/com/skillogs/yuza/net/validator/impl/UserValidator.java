@@ -47,7 +47,9 @@ public class UserValidator implements Validator<UserDto> {
             }
         }
 
-        if (!emailPattern.matcher(user.getEmail()).matches()) {
+        if (StringUtils.isEmpty(user.getEmail())) {
+            errors.add(new ValidatorError("email", "NotEmpty"));
+        } else if (!emailPattern.matcher(user.getEmail()).matches()) {
             errors.add(new ValidatorError("email", "EmailPattern"));
         }
         if (StringUtils.isEmpty(user.getFirstName())) {
