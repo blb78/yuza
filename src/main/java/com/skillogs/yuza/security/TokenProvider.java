@@ -43,11 +43,11 @@ public class TokenProvider implements TokenAuthenticationService {
     @Autowired
     public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
                          @Value("${key.rsa.public}") String keyPub) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+        this.keyFactory = KeyFactory.getInstance("RSA");
         Algorithm a = Algorithm.RSA256(
                 getPublicKey(keyPub),
                 getPrivateKey(keyPriv));
         this.verifier = JWT.require(a).build();
-        this.keyFactory = KeyFactory.getInstance("RSA");
     }
 
     @Override
