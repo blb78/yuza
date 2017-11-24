@@ -17,26 +17,6 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 class GlobalControllerExceptionHandler {
 
-    @ExceptionHandler(ApiConflictException.class)
-    @ResponseStatus(value= HttpStatus.CONFLICT, reason="Email already exist")
-    public void ApiEmailAlreadyExistException()  {  }
-
-    @ExceptionHandler(ApiNotFoundException.class)
-    @ResponseStatus(value= HttpStatus.NOT_FOUND, reason="User not found")
-    public void ApiNotFoundException()  {  }
-
-    @ExceptionHandler(ApiCourseNotFoundException.class)
-    @ResponseStatus(value= HttpStatus.NOT_FOUND, reason="Course not found")
-    public void ApiCourseNotFoundException()  {  }
-
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(value= HttpStatus.UNAUTHORIZED)
-    public void AuthenticationException()  {  }
-
-    @ExceptionHandler(ApiBadRequestException.class)
-    @ResponseStatus(value= HttpStatus.BAD_REQUEST)
-    public void BadRequestException()  {  }
-
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(value= HttpStatus.FORBIDDEN)
     public void AccessDeniedException()  {  }

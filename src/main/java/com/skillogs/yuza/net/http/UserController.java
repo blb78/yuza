@@ -4,13 +4,10 @@ package com.skillogs.yuza.net.http;
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
-import com.skillogs.yuza.net.exception.ApiCourseNotFoundException;
-import com.skillogs.yuza.net.exception.ApiNotFoundException;
-import com.skillogs.yuza.net.validator.CreateUserValidator;
 import com.skillogs.yuza.net.validator.UserValidator;
+import com.skillogs.yuza.net.validator.Validator;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,19 +29,15 @@ public class UserController {
 
     private final UserRepository repository;
     private final UserMapper userMapper;
-    private final UserValidator userValidator;
-    private final CreateUserValidator createUserValidator;
-
+    private final Validator<UserDto> userValidator;
 
     @Autowired
     public UserController(UserRepository repository,
                           UserMapper userMapper,
-                          @Qualifier("userValidator") UserValidator userValidator,
-                          @Qualifier("createUserValidator") CreateUserValidator createUserValidator) {
+                          UserValidator userValidator) {
         this.repository = repository;
         this.userMapper = userMapper;
         this.userValidator = userValidator;
-        this.createUserValidator = createUserValidator;
     }
 
     @GetMapping
@@ -55,14 +48,14 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public UserDto createUser(@RequestBody UserDto user)  {
-        createUserValidator.validate(user);
+    public UserDto create(@RequestBody UserDto user)  {
+        userValidator.validate(user);
         return userMapper.toDTO(repository.save(userMapper.to(user)));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public ResponseEntity<UserDto> findUser(@PathVariable String id)  {
+    public ResponseEntity<UserDto> findOne(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
                 .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -70,7 +63,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDto> findUser(@AuthenticationPrincipal User authenticated)  {
+    public ResponseEntity<UserDto> findMe(@AuthenticationPrincipal User authenticated)  {
         return Optional.ofNullable(repository.findById(authenticated.getId()))
                 .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -79,11 +72,11 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody UserDto user){
+    public ResponseEntity<User> update(@PathVariable String id, @RequestBody UserDto user){
         user.setId(id);
         User currentUser = repository.findById(id);
         if (currentUser == null){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
         user.setPassword(currentUser.getPassword());
 
@@ -95,12 +88,13 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public void  deleteUser(@PathVariable String id)  {
+    public ResponseEntity delete(@PathVariable String id)  {
         User user = repository.findById(id);
-        if (user == null){
-            throw new ApiNotFoundException();
+        if (user == null) {
+            return ResponseEntity.notFound().build();
         }
         repository.delete(user);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/authenticate")
@@ -117,46 +111,44 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
     @DeleteMapping("/{id}/courses")
-    public ResponseEntity<Set<String>> deleteAllCourses(@PathVariable String id)  {
+    public ResponseEntity unfollowAllCourses(@PathVariable String id)  {
         User user = repository.findById(id);
         if (user == null){
-            throw new ApiNotFoundException();
+            return ResponseEntity.notFound().build();
         }
-        Set<String> s = Collections.emptySet();
-        user.setCourses(s);
+        user.setCourses(Collections.emptySet());
         return Optional.ofNullable(repository.save(user))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
+                .map(u -> ResponseEntity.ok().build())
                 .orElse(ResponseEntity.notFound().build());
     }
+
     @PutMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> addCourse(@PathVariable String id, @PathVariable String course)  {
+    public ResponseEntity<Set<String>> followCourse(@PathVariable String id, @PathVariable String course)  {
         User user = repository.findById(id);
         if (user == null){
-            throw new ApiNotFoundException();
+            return ResponseEntity.notFound().build();
         }
-        user.addCourse(course);
+        user.follow(course);
 
         return Optional.ofNullable(repository.save(user))
                 .map(User::getCourses)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-
     }
+    
     @DeleteMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> deleteCourse(@PathVariable String id, @PathVariable String course)  {
+    public ResponseEntity<Set<String>> unfollowCourse(@PathVariable String id, @PathVariable String course)  {
         User user = repository.findById(id);
         if (user == null){
-            throw new ApiNotFoundException();
+            return ResponseEntity.notFound().build();
         }
-        Set<String> hSet = user.getCourses();
-        if (!hSet.contains(course)){
-            throw new ApiCourseNotFoundException();
+        if (!user.isFollowing(course)){
+            return ResponseEntity.notFound().build();
         }
 
-        hSet.remove(course);
-        user.setCourses(hSet);
+        user.unfollow(course);
         return Optional.ofNullable(repository.save(user))
                 .map(User::getCourses)
                 .map(ResponseEntity::ok)

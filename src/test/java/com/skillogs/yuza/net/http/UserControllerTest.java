@@ -10,7 +10,6 @@ import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
 import com.skillogs.yuza.net.dto.UserMapperImpl;
-import com.skillogs.yuza.net.validator.CreateUserValidator;
 import com.skillogs.yuza.net.validator.UserValidator;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
@@ -33,16 +32,18 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class, UserValidator.class, CreateUserValidator.class})
+@Import({UserMapperImpl.class, WebConfiguration.class, SecurityConfiguration.class, UserValidator.class})
 @EnableSpringDataWebSupport
 @RunWith(SpringRunner.class)
 @WebMvcTest(UserController.class)
@@ -55,13 +56,17 @@ public class UserControllerTest {
     @MockBean private UserRepository userRepository;
     @MockBean private TokenAuthenticationService tkpv;
 
-    private User createUser() {
+    @SafeVarargs
+    private final User createUser(Consumer<User>... cons) {
         User john = new User("john.doe@exemple.com");
         john.setId("id");
         john.setFirstName("John");
         john.setPassword("password");
         john.setLastName("Doe");
         john.addRole(Role.STUDENT);
+        for (Consumer<User> con : cons) {
+            con.accept(john);
+        }
         return john;
     }
 
@@ -115,7 +120,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void get_by_id_success() throws Exception {
+    public void should_get_user_by_id() throws Exception {
         User user = createUser();
         when(userRepository.findById(user.getId())).thenReturn(user);
 
@@ -144,7 +149,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void get_by_id_fail_404_not_found() throws Exception {
+    public void failed_to_get_user_by_id_with_404() throws Exception {
         when(userRepository.findById("unknown_id")).thenReturn(null);
 
         mvc.perform(get(UserController.URI+"/{id}", "unknown_id"))
@@ -191,13 +196,11 @@ public class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$",            hasSize(5)))
                 .andExpect(jsonPath("$..field",     containsInAnyOrder("email", "firstName", "lastName", "password", "roles")))
-                .andExpect(jsonPath("$..message",   containsInAnyOrder("Email", "NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty")));
-
-        verifyZeroInteractions(userRepository);
+                .andExpect(jsonPath("$..message",   containsInAnyOrder("EmailPattern", "NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty")));
     }
 
     @Test
-    public void failed_to_create_user_with_unkown_roles() throws Exception {
+    public void failed_to_create_user_with_unknown_roles() throws Exception {
         UserDto user = new UserDto();
         user.addRole("USER");
         user.addRole("MAGICIEN");
@@ -210,12 +213,10 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isBadRequest());
-        verifyZeroInteractions(userRepository);
     }
 
-
     @Test
-    public void should_get_all_success_with_admin_role() throws Exception {
+    public void should_get_all_users_with_admin_role() throws Exception {
         when(tkpv.getAuthentication(Mockito.any()))
                 .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
@@ -229,9 +230,6 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.numberOfElements").value(1))
                 .andExpect(jsonPath("$.content.[0].id").value("id"));
     }
-    // =========================================== Create New User ========================================
-
-
 
     @Test
     public void should_create_instructor() throws Exception {
@@ -259,8 +257,8 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_create_user_fail_409_conflict() throws Exception {
-        User user = createUser();
+    public void failed_to_create_user_with_same_email_address() throws Exception {
+        User user = createUser(u->u.setId(null));
 
         when(userRepository.countByEmail(user.getEmail())).thenReturn(1L);
 
@@ -268,7 +266,9 @@ public class UserControllerTest {
                 post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0].field",   is("email")))
+                .andExpect(jsonPath("$[0].message", is("AlreadyUsed")));
     }
 
     @Test
@@ -291,7 +291,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void fail_update_user_with_404_not_found() throws Exception {
+    public void failed_to_update_user_with_404() throws Exception {
         User user = createUser();
 
         when(userRepository.findById(user.getId())).thenReturn(null);
@@ -308,11 +308,11 @@ public class UserControllerTest {
     public void should_delete_user() throws Exception {
         User user = createUser();
         when(userRepository.findById(user.getId())).thenReturn(user);
-        doNothing().when(userRepository).delete(user);
 
         mvc.perform(
                 delete(UserController.URI+"/{id}", user.getId()))
                 .andExpect(status().isOk());
+        verify(userRepository).delete(user);
     }
 
     @Test
@@ -383,7 +383,7 @@ public class UserControllerTest {
     @Test
     public void add_courses_success() throws Exception {
         User user = createUser();
-        user.addCourse("toto");
+        user.follow("toto");
 
         when(userRepository.findById(user.getId())).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
@@ -415,7 +415,7 @@ public class UserControllerTest {
     @Test
     public void delete_courses_success() throws Exception {
         User user = createUser();
-        user.addCourse("toto");
+        user.follow("toto");
 
         when(userRepository.findById(user.getId())).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
@@ -437,24 +437,21 @@ public class UserControllerTest {
     @Test
     public void delete_courses_fail_404_not_found() throws Exception {
         User user = createUser();
-        user.addCourse("toto");
+        user.follow("math_course_id");
 
         when(userRepository.findById(user.getId())).thenReturn(user);
 
         mvc.perform(
-                delete(UserController.URI + "/{id}/courses/gniiiii", user.getId())
+                delete(UserController.URI + "/{id}/courses/{courseId)", user.getId(), "unknown_id")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-
-        verify(userRepository).findById(user.getId());
-        verifyNoMoreInteractions(userRepository);
     }
 
     @Test
-    public void delete_all_courses_success() throws Exception {
+    public void should_delete_all_courses() throws Exception {
         User user = createUser();
-        user.addCourse("toto");
-        user.addCourse("tutu");
+        user.follow("math_course_id");
+        user.follow("java_course_id");
 
         when(userRepository.findById(user.getId())).thenReturn(user);
         when(userRepository.save(user)).thenReturn(user);
@@ -463,25 +460,16 @@ public class UserControllerTest {
                 delete(UserController.URI + "/{id}/courses", user.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").doesNotExist())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-
-        verify(userRepository).findById(user.getId());
-        verify(userRepository).save(user);
-        verifyNoMoreInteractions(userRepository);
+                .andExpect(content().string(""));
     }
 
     @Test
-    public void delete_all_courses_fail_404_not_found() throws Exception {
+    public void failed_to_delete_all_courses_with_404() throws Exception {
 
-        when(userRepository.findById("gnii")).thenReturn(null);
+        when(userRepository.findById("unknown_id")).thenReturn(null);
 
-        mvc.perform(delete(UserController.URI+"/{id}/courses", "gnii"))
+        mvc.perform(delete(UserController.URI+"/{id}/courses", "unknown_id"))
                 .andExpect(status().isNotFound());
-
-        verify(userRepository).findById("gnii");
-        verifyNoMoreInteractions(userRepository);
     }
 
     @Test

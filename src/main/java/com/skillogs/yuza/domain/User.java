@@ -137,8 +137,16 @@ public class User  {
         this.courses = courses;
     }
 
-    public void addCourse(String course){
+    public void follow(String course){
         this.courses.add(course);
+    }
+
+    public void unfollow(String course) {
+        this.courses.remove(course);
+    }
+
+    public boolean isFollowing(String course) {
+        return this.courses.contains(course);
     }
 
     public Set<Role> getRoles() {
@@ -180,6 +188,5 @@ public class User  {
     public int hashCode() {
         return email.hashCode();
     }
-
 
 }
