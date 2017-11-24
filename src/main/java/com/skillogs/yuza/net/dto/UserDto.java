@@ -6,21 +6,13 @@ import java.util.Set;
 public class UserDto {
 
     private String id;
-
     private String email;
-
     private String firstName;
-
     private String lastName;
-
     private String city;
-
     private String country;
-
     private String password;
-
     private long birthday;
-
     private Set<String> roles = new HashSet<>();
 
     public String getId() {
