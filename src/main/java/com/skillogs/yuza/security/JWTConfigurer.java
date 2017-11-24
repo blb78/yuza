@@ -1,5 +1,7 @@
 package com.skillogs.yuza.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
@@ -7,11 +9,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 public class JWTConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
-    public static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTConfigurer.class);
 
-    private final TokenProvider tokenProvider;
+    private final TokenAuthenticationService tokenProvider;
 
-    public JWTConfigurer(TokenProvider tokenProvider) {
+    public JWTConfigurer(TokenAuthenticationService tokenProvider) {
         this.tokenProvider = tokenProvider;
     }
 
@@ -19,5 +21,6 @@ public class JWTConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilt
     public void configure(HttpSecurity http) throws Exception {
         JWTFilter customFilter = new JWTFilter(tokenProvider);
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
+        LOGGER.info("Created JWTFilter before UsernamePasswordAuthenticationFilter");
     }
 }

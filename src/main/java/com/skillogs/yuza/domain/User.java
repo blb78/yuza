@@ -1,7 +1,6 @@
 package com.skillogs.yuza.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -19,16 +18,12 @@ public class User  {
     private String lastName;
     private String city;
     private String country;
-    private Set<String> courses = new HashSet<String>();
-    private Set<String> roles = new HashSet<String>();
+    private Set<String> courses = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
     private long birthday;
-    @JsonIgnore
     private String picture;
-    @JsonIgnore
     private boolean enabled = true;
-    @JsonIgnore
     private boolean locked = false;
-    @JsonIgnore
     private long createdAt  = System.currentTimeMillis();
 
     public User(String email) {
@@ -36,7 +31,7 @@ public class User  {
     }
 
     public User() {
-
+        // NOTE : for bean convention
     }
 
 
@@ -141,18 +136,27 @@ public class User  {
         this.courses = courses;
     }
 
-    public void addCourse(String course){
+    public void follow(String course){
         this.courses.add(course);
     }
 
-    public Set<String> getRoles() {
+    public void unfollow(String course) {
+        this.courses.remove(course);
+    }
+
+    public boolean isFollowing(String course) {
+        return this.courses.contains(course);
+    }
+
+    public Set<Role> getRoles() {
         return roles;
     }
 
-    public void setRoles(Set<String> roles) {
+    public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
-    public void addRole(String role){
+
+    public void addRole(Role role){
         this.roles.add(role);
     }
 
@@ -183,6 +187,5 @@ public class User  {
     public int hashCode() {
         return email.hashCode();
     }
-
 
 }

@@ -13,16 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -32,26 +28,26 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
-public class TokenProvider implements TokenAuthenticationService{
+public class TokenProvider implements TokenAuthenticationService {
 
-    private  JWTVerifier verifier;
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String AUTHORISATION_HEADER = "Authorization";
 
+    private final JWTVerifier verifier;
+    private final KeyFactory keyFactory;
+
     @Autowired
     public TokenProvider(@Value("${key.rsa.private}") String keyPriv,
-                         @Value("${key.rsa.public}") String keyPub)throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
-
+                         @Value("${key.rsa.public}") String keyPub) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         Algorithm a = Algorithm.RSA256(
                 getPublicKey(keyPub),
                 getPrivateKey(keyPriv));
         this.verifier = JWT.require(a).build();
+        this.keyFactory = KeyFactory.getInstance("RSA");
     }
 
     @Override
@@ -60,34 +56,34 @@ public class TokenProvider implements TokenAuthenticationService{
         if (token== null) return null;
         List<SimpleGrantedAuthority> authorities = token.getClaim("roles").asList(SimpleGrantedAuthority.class);
 
-
         User principal = new User(token.getClaim("email").asString());
+        principal.setId(token.getClaim("iss").asString());
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     private DecodedJWT isValid(String token) {
+        if (StringUtils.isEmpty(token)) return null;
         try {
-            if (StringUtils.isEmpty(token)) return null;
-            return  verifier.verify(token.replace(TOKEN_PREFIX, ""));
-        } catch (JWTVerificationException  exception){
+            return verifier.verify(token.replace(TOKEN_PREFIX, ""));
+        } catch (JWTVerificationException exception){
             return null;
         }
     }
-    private static RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+    private RSAPublicKey getPublicKey(String filename) throws IOException, InvalidKeySpecException {
 
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
         String publicKeyContent = new String(encoded);
 
-        publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");;
-
-        KeyFactory kf = KeyFactory.getInstance("RSA");
+        publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
 
         X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
-        return (RSAPublicKey) kf.generatePublic(keySpecX509);
+        return (RSAPublicKey) keyFactory.generatePublic(keySpecX509);
     }
-    private static RSAPrivateKey getPrivateKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+    private RSAPrivateKey getPrivateKey(String filename) throws IOException, InvalidKeySpecException {
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
         String privateKeyContent = new String(encoded);
@@ -107,14 +103,7 @@ public class TokenProvider implements TokenAuthenticationService{
         ASN1Sequence seq = new DERSequence(v);
         byte[] privKey = seq.getEncoded("DER");
 
-        PKCS8EncodedKeySpec spec = new  PKCS8EncodedKeySpec(privKey);
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        return (RSAPrivateKey) fact.generatePrivate(spec);
-    }
-
-    private static String read(InputStream input) throws IOException {
-        try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
-            return buffer.lines().collect(Collectors.joining("\n"));
-        }
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privKey);
+        return (RSAPrivateKey) keyFactory.generatePrivate(spec);
     }
 }

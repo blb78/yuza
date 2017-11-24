@@ -1,4 +1,4 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.net.dto;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,11 +11,9 @@ public class UserDto {
     private String lastName;
     private String city;
     private String country;
+    private String password;
     private long birthday;
-    private Set<String> roles = new HashSet<String>();
-
-    public UserDto() {
-    }
+    private Set<String> roles = new HashSet<>();
 
     public String getId() {
         return id;
@@ -83,5 +81,13 @@ public class UserDto {
 
     public void addRole(String role){
         this.roles.add(role);
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
