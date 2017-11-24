@@ -18,10 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -33,7 +30,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class TokenProvider implements TokenAuthenticationService {
@@ -75,7 +71,7 @@ public class TokenProvider implements TokenAuthenticationService {
         }
     }
 
-    private RSAPublicKey getPublicKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private RSAPublicKey getPublicKey(String filename) throws IOException, InvalidKeySpecException {
 
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
@@ -87,7 +83,7 @@ public class TokenProvider implements TokenAuthenticationService {
         return (RSAPublicKey) keyFactory.generatePublic(keySpecX509);
     }
 
-    private RSAPrivateKey getPrivateKey(String filename) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private RSAPrivateKey getPrivateKey(String filename) throws IOException, InvalidKeySpecException {
         byte[] encoded = Files.readAllBytes(Paths.get(filename));
 
         String privateKeyContent = new String(encoded);

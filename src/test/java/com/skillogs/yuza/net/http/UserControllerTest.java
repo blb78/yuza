@@ -88,8 +88,8 @@ public class UserControllerTest {
     }
 
     class TestCase {
-        MockHttpServletRequestBuilder request;
-        Role role;
+        final MockHttpServletRequestBuilder request;
+        final Role role;
 
         TestCase(Role role, MockHttpServletRequestBuilder request) {
             this.request = request;
