@@ -16,4 +16,12 @@ public class ValidatorError {
     public String getMessage() {
         return message;
     }
+
+    @Override
+    public String toString() {
+        return "ValidatorError{" +
+                "field='" + field + '\'' +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

@@ -1,10 +1,9 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.net.http.user;
 
 
 import com.skillogs.yuza.domain.User;
 import com.skillogs.yuza.net.dto.UserDto;
 import com.skillogs.yuza.net.dto.UserMapper;
-import com.skillogs.yuza.net.validator.impl.UserValidator;
 import com.skillogs.yuza.net.validator.Validator;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
 
 @RestController
@@ -28,36 +25,36 @@ public class UserController {
     public static final String URI = "/users";
 
     private final UserRepository repository;
-    private final UserMapper userMapper;
-    private final Validator<UserDto> userValidator;
+    private final UserMapper mapper;
+    private final Validator<UserDto> validator;
 
     @Autowired
     public UserController(UserRepository repository,
-                          UserMapper userMapper,
-                          UserValidator userValidator) {
+                          UserMapper mapper,
+                          Validator<UserDto> validator) {
         this.repository = repository;
-        this.userMapper = userMapper;
-        this.userValidator = userValidator;
+        this.mapper = mapper;
+        this.validator = validator;
     }
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR','ADMIN')")
     public Page<UserDto> findAll(Pageable pageable){
-        return repository.findAll(pageable).map(userMapper::toDTO);
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public UserDto create(@RequestBody UserDto user)  {
-        userValidator.validate(user);
-        return userMapper.toDTO(repository.save(userMapper.to(user)));
+        validator.validate(user);
+        return mapper.toDTO(repository.save(mapper.to(user)));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public ResponseEntity<UserDto> findOne(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
-                .map(userMapper::toDTO)
+                .map(mapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -65,7 +62,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserDto> findMe(@AuthenticationPrincipal User authenticated)  {
         return Optional.ofNullable(repository.findById(authenticated.getId()))
-                .map(userMapper::toDTO)
+                .map(mapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -80,8 +77,8 @@ public class UserController {
         }
         user.setPassword(currentUser.getPassword());
 
-        userValidator.validate(user);
-        return Optional.ofNullable(repository.save(userMapper.to(user)))
+        validator.validate(user);
+        return Optional.ofNullable(repository.save(mapper.to(user)))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -104,56 +101,6 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    @GetMapping("/{id}/courses")
-    public ResponseEntity<Set<String>> findCourses(@PathVariable String id)  {
-        return Optional.ofNullable(repository.findById(id))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}/courses")
-    public ResponseEntity unfollowAllCourses(@PathVariable String id)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        user.setCourses(Collections.emptySet());
-        return Optional.ofNullable(repository.save(user))
-                .map(u -> ResponseEntity.ok().build())
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> followCourse(@PathVariable String id, @PathVariable String course)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        user.follow(course);
-
-        return Optional.ofNullable(repository.save(user))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    
-    @DeleteMapping("/{id}/courses/{course}")
-    public ResponseEntity<Set<String>> unfollowCourse(@PathVariable String id, @PathVariable String course)  {
-        User user = repository.findById(id);
-        if (user == null){
-            return ResponseEntity.notFound().build();
-        }
-        if (!user.isFollowing(course)){
-            return ResponseEntity.notFound().build();
-        }
-
-        user.unfollow(course);
-        return Optional.ofNullable(repository.save(user))
-                .map(User::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
 
     public static class UserCredentials {
         private String email;
