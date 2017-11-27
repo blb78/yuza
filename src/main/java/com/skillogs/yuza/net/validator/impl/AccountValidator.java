@@ -1,13 +1,12 @@
 package com.skillogs.yuza.net.validator.impl;
 
-import com.skillogs.yuza.domain.Role;
-import com.skillogs.yuza.net.dto.UserDto;
+import com.skillogs.yuza.domain.account.Role;
+import com.skillogs.yuza.net.dto.AccountDto;
 import com.skillogs.yuza.net.exception.ValidationException;
 import com.skillogs.yuza.net.exception.ValidatorError;
 import com.skillogs.yuza.net.validator.Validator;
-import com.skillogs.yuza.repository.UserRepository;
+import com.skillogs.yuza.repository.AccountRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -18,29 +17,28 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
-public class UserValidator implements Validator<UserDto> {
+public class AccountValidator implements Validator<AccountDto> {
 
-    private final UserRepository repository;
+    private final AccountRepository repository;
     private final Pattern emailPattern;
 
 
-    public UserValidator(UserRepository repository) {
+    public AccountValidator(AccountRepository repository) {
         this.repository = repository;
         this.emailPattern = Pattern.compile("^([_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*(\\.[a-zA-Z]{1,6}))?$");
     }
 
     @Override
-    public void validate(UserDto user) throws ValidationException {
+    public void validate(AccountDto user) throws ValidationException {
         List<ValidatorError> errors = new ArrayList<>();
         if (user.getId() == null) {
             if (StringUtils.isEmpty(user.getPassword())) {
                 errors.add(new ValidatorError("password", "NotEmpty"));
             }
-            if (CollectionUtils.isEmpty(user.getRoles())) {
-                errors.add(new ValidatorError("roles", "NotEmpty"));
-            }
-            if (!areValid(user.getRoles())){
-                errors.add(new ValidatorError("roles", "Invalid"));
+            if (StringUtils.isEmpty(user.getRole())) {
+                errors.add(new ValidatorError("role", "NotEmpty"));
+            } else if (!isValid(user.getRole())){
+                errors.add(new ValidatorError("role", "Invalid"));
             }
             if (repository.countByEmail(user.getEmail()) > 0) {
                 errors.add(new ValidatorError("email", "AlreadyUsed"));
@@ -64,8 +62,8 @@ public class UserValidator implements Validator<UserDto> {
         }
     }
 
-    private boolean areValid(Set<String> roles) {
+    private boolean isValid(String role) {
         List<String> allRoles = Arrays.stream(Role.values()).map(Enum::name).collect(Collectors.toList());
-        return allRoles.containsAll(roles);
+        return allRoles.contains(role);
     }
 }

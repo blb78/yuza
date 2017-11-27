@@ -3,7 +3,7 @@ package com.skillogs.yuza.net.dto;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UserDto {
+public class AccountDto {
 
     private String id;
     private String email;
@@ -13,7 +13,7 @@ public class UserDto {
     private String country;
     private String password;
     private long birthday;
-    private Set<String> roles = new HashSet<>();
+    private String role;
 
     public String getId() {
         return id;
@@ -71,16 +71,12 @@ public class UserDto {
         this.birthday = birthday;
     }
 
-    public Set<String> getRoles() {
-        return roles;
+    public String getRole() {
+        return role;
     }
 
-    public void setRoles(Set<String> roles) {
-        this.roles = roles;
-    }
-
-    public void addRole(String role){
-        this.roles.add(role);
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public String getPassword() {

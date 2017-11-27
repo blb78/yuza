@@ -1,4 +1,4 @@
-package com.skillogs.yuza.domain;
+package com.skillogs.yuza.domain.account;
 
 
 import org.springframework.data.annotation.Id;
@@ -9,7 +9,7 @@ import java.util.Set;
 
 
 @Document
-public class User  {
+public class Account {
     @Id
     private String id;
     private String email;
@@ -18,19 +18,18 @@ public class User  {
     private String lastName;
     private String city;
     private String country;
-    private Set<String> courses = new HashSet<>();
-    private Set<Role> roles = new HashSet<>();
+    private Role role;
     private long birthday;
     private String picture;
     private boolean enabled = true;
     private boolean locked = false;
     private long createdAt  = System.currentTimeMillis();
 
-    public User(String email) {
+    public Account(String email) {
         this.email = email;
     }
 
-    public User() {
+    public Account() {
         // NOTE : for bean convention
     }
 
@@ -128,41 +127,9 @@ public class User  {
         this.country = country;
     }
 
-    public Set<String> getCourses() {
-        return courses;
-    }
-
-    public void setCourses(Set<String> courses) {
-        this.courses = courses;
-    }
-
-    public void follow(String course){
-        this.courses.add(course);
-    }
-
-    public void unfollow(String course) {
-        this.courses.remove(course);
-    }
-
-    public boolean isFollowing(String course) {
-        return this.courses.contains(course);
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
-
-    public void addRole(Role role){
-        this.roles.add(role);
-    }
-
     @Override
     public String toString() {
-        return "User{" +
+        return "Account{" +
                 "id=" + id +
                 ", email=" + email +
                 ", firstName=" + firstName +
@@ -178,9 +145,9 @@ public class User  {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        User user = (User) o;
+        Account account = (Account) o;
 
-        return email.equals(user.email);
+        return email.equals(account.email);
     }
 
     @Override
@@ -188,4 +155,11 @@ public class User  {
         return email.hashCode();
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

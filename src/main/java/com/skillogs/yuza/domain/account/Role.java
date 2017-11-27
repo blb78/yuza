@@ -1,4 +1,4 @@
-package com.skillogs.yuza.domain;
+package com.skillogs.yuza.domain.account;
 
 public enum Role {
 

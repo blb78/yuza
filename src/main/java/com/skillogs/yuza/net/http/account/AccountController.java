@@ -1,11 +1,11 @@
-package com.skillogs.yuza.net.http.user;
+package com.skillogs.yuza.net.http.account;
 
 
-import com.skillogs.yuza.domain.User;
-import com.skillogs.yuza.net.dto.UserDto;
-import com.skillogs.yuza.net.dto.UserMapper;
+import com.skillogs.yuza.domain.account.Account;
+import com.skillogs.yuza.net.dto.AccountDto;
+import com.skillogs.yuza.net.dto.AccountMapper;
 import com.skillogs.yuza.net.validator.Validator;
-import com.skillogs.yuza.repository.UserRepository;
+import com.skillogs.yuza.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,19 +19,19 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping(UserController.URI)
-public class UserController {
+@RequestMapping(AccountController.URI)
+public class AccountController {
 
-    public static final String URI = "/users";
+    public static final String URI = "/accounts";
 
-    private final UserRepository repository;
-    private final UserMapper mapper;
-    private final Validator<UserDto> validator;
+    private final AccountRepository repository;
+    private final AccountMapper mapper;
+    private final Validator<AccountDto> validator;
 
     @Autowired
-    public UserController(UserRepository repository,
-                          UserMapper mapper,
-                          Validator<UserDto> validator) {
+    public AccountController(AccountRepository repository,
+                             AccountMapper mapper,
+                             Validator<AccountDto> validator) {
         this.repository = repository;
         this.mapper = mapper;
         this.validator = validator;
@@ -39,20 +39,20 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR','ADMIN')")
-    public Page<UserDto> findAll(Pageable pageable){
+    public Page<AccountDto> findAll(Pageable pageable){
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public UserDto create(@RequestBody UserDto user)  {
-        validator.validate(user);
-        return mapper.toDTO(repository.save(mapper.to(user)));
+    public AccountDto create(@RequestBody AccountDto account)  {
+        validator.validate(account);
+        return mapper.toDTO(repository.save(mapper.to(account)));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public ResponseEntity<UserDto> findOne(@PathVariable String id)  {
+    public ResponseEntity<AccountDto> findOne(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
                 .map(mapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -60,7 +60,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDto> findMe(@AuthenticationPrincipal User authenticated)  {
+    public ResponseEntity<AccountDto> findMe(@AuthenticationPrincipal Account authenticated) {
         return Optional.ofNullable(repository.findById(authenticated.getId()))
                 .map(mapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -69,16 +69,16 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
-    public ResponseEntity<User> update(@PathVariable String id, @RequestBody UserDto user){
-        user.setId(id);
-        User currentUser = repository.findById(id);
-        if (currentUser == null){
+    public ResponseEntity<Account> update(@PathVariable String id, @RequestBody AccountDto account){
+        account.setId(id);
+        Account currentAccount = repository.findById(id);
+        if (currentAccount == null){
             return ResponseEntity.notFound().build();
         }
-        user.setPassword(currentUser.getPassword());
+        account.setPassword(currentAccount.getPassword());
 
-        validator.validate(user);
-        return Optional.ofNullable(repository.save(mapper.to(user)))
+        validator.validate(account);
+        return Optional.ofNullable(repository.save(mapper.to(account)))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -86,23 +86,23 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public ResponseEntity delete(@PathVariable String id)  {
-        User user = repository.findById(id);
-        if (user == null) {
+        Account account = repository.findById(id);
+        if (account == null) {
             return ResponseEntity.notFound().build();
         }
-        repository.delete(user);
+        repository.delete(account);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/authenticate")
-    public ResponseEntity<User> authenticate(@RequestBody UserCredentials user){
-        return Optional.ofNullable(repository.findByEmailAndPassword(user.getEmail(),user.getPassword()))
+    public ResponseEntity<Account> authenticate(@RequestBody AccountCredentials account){
+        return Optional.ofNullable(repository.findByEmailAndPassword(account.getEmail(),account.getPassword()))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
 
-    public static class UserCredentials {
+    public static class AccountCredentials {
         private String email;
         private String password;
 
