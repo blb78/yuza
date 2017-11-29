@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
+import com.skillogs.yuza.domain.user.Student;
+import com.skillogs.yuza.domain.user.Teacher;
 import com.skillogs.yuza.domain.account.Account;
 import com.skillogs.yuza.domain.account.Role;
 import com.skillogs.yuza.net.dto.AccountDto;
@@ -14,6 +16,7 @@ import com.skillogs.yuza.net.exception.ValidationException;
 import com.skillogs.yuza.net.exception.ValidatorError;
 import com.skillogs.yuza.net.validator.impl.AccountValidator;
 import com.skillogs.yuza.repository.AccountRepository;
+import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +60,10 @@ public class AccountControllerTest {
     @MockBean private AccountRepository accountRepository;
     @MockBean private TokenAuthenticationService tkpv;
     @MockBean private AccountValidator validator;
+    @MockBean private UserRepository userRepository;
 
     @SafeVarargs
-    private final Account createUser(Consumer<Account>... cons) {
+    private final Account createAccount(Consumer<Account>... cons) {
         Account john = new Account("john.doe@exemple.com");
         john.setId("id");
         john.setFirstName("John");
@@ -84,8 +88,8 @@ public class AccountControllerTest {
         Arrays.asList(
                 new TestCase(Role.STUDENT, delete(AccountController.URI+"/some_user_id")),
                 new TestCase(Role.STUDENT, get(AccountController.URI+"/some_user_id")),
-                new TestCase(Role.STUDENT, put(AccountController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createUser()))),
-                new TestCase(Role.STUDENT, post(AccountController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createUser())))
+                new TestCase(Role.STUDENT, put(AccountController.URI+"/some_user_id").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createAccount()))),
+                new TestCase(Role.STUDENT, post(AccountController.URI ).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createAccount())))
         ).forEach(TestCase::checkIsSecured);
     }
 
@@ -111,7 +115,7 @@ public class AccountControllerTest {
     @Test
     public void should_get_all_success() throws Exception {
         when(accountRepository.findAll(Mockito.any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Lists.newArrayList(createUser())));
+                .thenReturn(new PageImpl<>(Lists.newArrayList(createAccount())));
 
         mvc.perform(get(AccountController.URI))
                 .andExpect(status().isOk())
@@ -123,7 +127,7 @@ public class AccountControllerTest {
 
     @Test
     public void should_get_user_by_id() throws Exception {
-        Account account = createUser();
+        Account account = createAccount();
         when(accountRepository.findById(account.getId())).thenReturn(account);
 
         mvc.perform(get(AccountController.URI+"/{id}", account.getId()))
@@ -136,7 +140,7 @@ public class AccountControllerTest {
 
     @Test
     public void should_get_me() throws Exception {
-        Account account = createUser();
+        Account account = createAccount();
         when(tkpv.getAuthentication(Mockito.any()))
                 .thenReturn(new TestingAuthenticationToken(account, null, "USER", "ADMIN", "OTHER"));
         when(accountRepository.findById(account.getId()))
@@ -159,8 +163,10 @@ public class AccountControllerTest {
     }
 
     @Test
-    public void should_create_user() throws Exception {
-        Account account = createUser();
+    public void should_create_account_with_role_student() throws Exception {
+        Account account = createAccount(
+                a -> a.setId(null),
+                a -> a.setRole(Role.STUDENT));
 
         when(accountRepository.countByEmail(account.getEmail())).thenReturn(0L);
         when(accountRepository.save(account)).thenAnswer(a -> {
@@ -168,6 +174,7 @@ public class AccountControllerTest {
             if (StringUtils.isEmpty(accountToSave.getPassword())) {
                 fail("Password is needed when creating account");
             }
+            account.setId("new_id");
             accountToSave.setId("new_id");
             return accountToSave;
         });
@@ -183,6 +190,42 @@ public class AccountControllerTest {
                 .andExpect(jsonPath("$.role",       is(Role.STUDENT.name())))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
                 .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
+
+        Student expected = new Student(account.getId());
+        verify(userRepository).save(expected);
+    }
+
+    @Test
+    public void should_create_account_with_role_teacher() throws Exception {
+        Account account = createAccount(
+                a -> a.setId(null),
+                a -> a.setRole(Role.INSTRUCTOR));
+
+        when(accountRepository.countByEmail(account.getEmail())).thenReturn(0L);
+        when(accountRepository.save(account)).thenAnswer(a -> {
+            Account accountToSave = a.getArgumentAt(0, Account.class);
+            if (StringUtils.isEmpty(accountToSave.getPassword())) {
+                fail("Password is needed when creating account");
+            }
+            account.setId("new_id");
+            accountToSave.setId("new_id");
+            return accountToSave;
+        });
+
+        mvc.perform(
+                post(AccountController.URI )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(accountMapper.toDTOWithPassword(account))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.id",         is("new_id")))
+                .andExpect(jsonPath("$.firstName",  is("John")))
+                .andExpect(jsonPath("$.role",       is(Role.INSTRUCTOR.name())))
+                .andExpect(jsonPath("$.lastName",   is("Doe")))
+                .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
+
+        Teacher expected = new Teacher(account.getId());
+        verify(userRepository).save(expected);
     }
 
 
@@ -211,7 +254,7 @@ public class AccountControllerTest {
                 .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
         when(accountRepository.findAll(Mockito.any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Lists.newArrayList(createUser())));
+                .thenReturn(new PageImpl<>(Lists.newArrayList(createAccount())));
 
         mvc.perform(get(AccountController.URI))
                 .andExpect(status().isOk())
@@ -225,7 +268,7 @@ public class AccountControllerTest {
     public void should_create_instructor() throws Exception {
         when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
-        Account account = createUser();
+        Account account = createAccount();
         account.setRole(Role.INSTRUCTOR);
 
         when(accountRepository.countByEmail(account.getEmail())).thenReturn(0L);
@@ -248,7 +291,7 @@ public class AccountControllerTest {
 
     @Test
     public void should_update_user() throws Exception {
-        Account account = createUser();
+        Account account = createAccount();
         account.setPassword(null);
 
         when(accountRepository.findById(account.getId())).thenReturn(account);
@@ -267,7 +310,7 @@ public class AccountControllerTest {
 
     @Test
     public void failed_to_update_user_with_404() throws Exception {
-        Account account = createUser();
+        Account account = createAccount();
 
         when(accountRepository.findById(account.getId())).thenReturn(null);
 
@@ -281,7 +324,7 @@ public class AccountControllerTest {
     // =========================================== Delete Account ============================================
     @Test
     public void should_delete_user() throws Exception {
-        Account account = createUser();
+        Account account = createAccount();
         when(accountRepository.findById(account.getId())).thenReturn(account);
 
         mvc.perform(
@@ -302,7 +345,7 @@ public class AccountControllerTest {
     @Test
     public void should_authenticate_user() throws Exception {
 
-        Account john = createUser();
+        Account john = createAccount();
         AccountController.AccountCredentials user = new AccountController.AccountCredentials();
         user.setEmail(john.getEmail());
         user.setPassword(john.getPassword());

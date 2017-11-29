@@ -19,7 +19,7 @@ public class ValveFilter implements Filter {
     }
 
     private void doFilter(HttpServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        LOGGER.info("Received {} {} from {} ({})", req.getMethod(), req.getRequestURI(), req.getRemoteHost(), req.getHeader("Account-Agent"));
+        LOGGER.info("Received {} {} from {} ({})", req.getMethod(), req.getRequestURI(), req.getRemoteHost(), req.getHeader("User-Agent"));
         long start = System.currentTimeMillis();
         try {
             chain.doFilter(req, res);

@@ -1,11 +1,14 @@
 package com.skillogs.yuza.net.http.account;
 
 
+import com.skillogs.yuza.domain.user.Student;
+import com.skillogs.yuza.domain.user.Teacher;
 import com.skillogs.yuza.domain.account.Account;
 import com.skillogs.yuza.net.dto.AccountDto;
 import com.skillogs.yuza.net.dto.AccountMapper;
 import com.skillogs.yuza.net.validator.Validator;
 import com.skillogs.yuza.repository.AccountRepository;
+import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,14 +30,17 @@ public class AccountController {
     private final AccountRepository repository;
     private final AccountMapper mapper;
     private final Validator<AccountDto> validator;
+    private final UserRepository userRepository;
 
     @Autowired
     public AccountController(AccountRepository repository,
                              AccountMapper mapper,
-                             Validator<AccountDto> validator) {
+                             Validator<AccountDto> validator,
+                             UserRepository userRepository) {
         this.repository = repository;
         this.mapper = mapper;
         this.validator = validator;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -47,7 +53,24 @@ public class AccountController {
     @PreAuthorize("hasAnyAuthority('ADMIN')")
     public AccountDto create(@RequestBody AccountDto account)  {
         validator.validate(account);
-        return mapper.toDTO(repository.save(mapper.to(account)));
+
+        Account savedAccount = repository.save(mapper.to(account));
+
+        saveUser(savedAccount);
+        return mapper.toDTO(savedAccount);
+    }
+
+    private void saveUser(Account account) {
+        switch (account.getRole()) {
+            case INSTRUCTOR:
+                userRepository.save(new Teacher(account.getId()));
+                break;
+            case STUDENT:
+                userRepository.save(new Student(account.getId()));
+                break;
+                default:
+                    throw new RuntimeException("Cannot create User for Role "+ account.getRole());
+        }
     }
 
     @GetMapping("/{id}")

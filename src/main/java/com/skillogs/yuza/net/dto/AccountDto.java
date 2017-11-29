@@ -1,8 +1,5 @@
 package com.skillogs.yuza.net.dto;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class AccountDto {
 
     private String id;
