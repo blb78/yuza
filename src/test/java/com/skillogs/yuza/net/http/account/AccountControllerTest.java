@@ -199,7 +199,7 @@ public class AccountControllerTest {
     public void should_create_account_with_role_teacher() throws Exception {
         Account account = createAccount(
                 a -> a.setId(null),
-                a -> a.setRole(Role.INSTRUCTOR));
+                a -> a.setRole(Role.TEACHER));
 
         when(accountRepository.countByEmail(account.getEmail())).thenReturn(0L);
         when(accountRepository.save(account)).thenAnswer(a -> {
@@ -220,7 +220,7 @@ public class AccountControllerTest {
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.id",         is("new_id")))
                 .andExpect(jsonPath("$.firstName",  is("John")))
-                .andExpect(jsonPath("$.role",       is(Role.INSTRUCTOR.name())))
+                .andExpect(jsonPath("$.role",       is(Role.TEACHER.name())))
                 .andExpect(jsonPath("$.lastName",   is("Doe")))
                 .andExpect(jsonPath("$.email",      is("john.doe@exemple.com")));
 
@@ -269,7 +269,7 @@ public class AccountControllerTest {
         when(tkpv.getAuthentication(Mockito.any())).thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
 
         Account account = createAccount();
-        account.setRole(Role.INSTRUCTOR);
+        account.setRole(Role.TEACHER);
 
         when(accountRepository.countByEmail(account.getEmail())).thenReturn(0L);
         when(accountRepository.save(account)).thenAnswer(a -> {
@@ -323,14 +323,27 @@ public class AccountControllerTest {
 
     // =========================================== Delete Account ============================================
     @Test
-    public void should_delete_user() throws Exception {
-        Account account = createAccount();
+    public void should_delete_account_user() throws Exception {
+        Account account = createAccount(a -> a.setRole(Role.STUDENT));
         when(accountRepository.findById(account.getId())).thenReturn(account);
 
         mvc.perform(
                 delete(AccountController.URI+"/{id}", account.getId()))
                 .andExpect(status().isOk());
         verify(accountRepository).delete(account);
+        verify(userRepository).delete(new Student(account.getId()));
+    }
+
+    @Test
+    public void should_delete_account_teacher() throws Exception {
+        Account account = createAccount(a -> a.setRole(Role.TEACHER));
+        when(accountRepository.findById(account.getId())).thenReturn(account);
+
+        mvc.perform(
+                delete(AccountController.URI+"/{id}", account.getId()))
+                .andExpect(status().isOk());
+        verify(accountRepository).delete(account);
+        verify(userRepository).delete(new Teacher(account.getId()));
     }
 
     @Test

@@ -28,4 +28,14 @@ public class UserRepositoryImpl implements UserRepository {
         mgo.save(student);
         return student;
     }
+
+    @Override
+    public void delete(Student student) {
+        mgo.remove(student);
+    }
+
+    @Override
+    public void delete(Teacher teacher) {
+        mgo.remove(teacher);
+    }
 }

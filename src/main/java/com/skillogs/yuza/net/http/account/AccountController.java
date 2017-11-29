@@ -62,7 +62,7 @@ public class AccountController {
 
     private void saveUser(Account account) {
         switch (account.getRole()) {
-            case INSTRUCTOR:
+            case TEACHER:
                 userRepository.save(new Teacher(account.getId()));
                 break;
             case STUDENT:
@@ -114,7 +114,21 @@ public class AccountController {
             return ResponseEntity.notFound().build();
         }
         repository.delete(account);
+        deleteUser(account);
         return ResponseEntity.ok().build();
+    }
+
+    private void deleteUser(Account account) {
+        switch (account.getRole()) {
+            case TEACHER:
+                userRepository.delete(new Teacher(account.getId()));
+                break;
+            case STUDENT:
+                userRepository.delete(new Student(account.getId()));
+                break;
+            default:
+                throw new RuntimeException("Cannot create User for Role "+ account.getRole());
+        }
     }
 
     @PostMapping("/authenticate")
