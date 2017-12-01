@@ -10,6 +10,7 @@ import com.skillogs.yuza.repository.ClassroomRepository;
 import com.skillogs.yuza.repository.CourseRepository;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
+import org.assertj.core.util.Sets;
 import org.bouncycastle.jcajce.provider.symmetric.TEA;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -150,6 +152,57 @@ public class ClassroomControllerTest {
         Classroom saved = captor.getValue();
         assertThat(saved.getId(),       is("id_classroom"));
         assertThat(saved.getCourses(),  hasItem(new Course("id_course")));
+    }
+
+    @Test
+    public void should_delete_course_from_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setCourses(Sets.newLinkedHashSet(new Course("id_course_1"), new Course("id_course_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(delete(ClassroomController.URI + "/{id}/courses/{idCourse}", "id_classroom", "id_course_1"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Classroom> captor = ArgumentCaptor.forClass(Classroom.class);
+        verify(classroomRepository).save(captor.capture());
+        Classroom saved = captor.getValue();
+        assertThat(saved.getId(),       is("id_classroom"));
+        assertThat(saved.getCourses(),  hasSize(1));
+        assertThat(saved.getCourses(),  hasItem(new Course("id_course_2")));
+    }
+
+    @Test
+    public void should_delete_teacher_from_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setTeachers(Sets.newLinkedHashSet(new Teacher("id_teacher_1"), new Teacher("id_teacher_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(delete(ClassroomController.URI + "/{id}/teachers/{idTeacher}", "id_classroom", "id_teacher_1"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Classroom> captor = ArgumentCaptor.forClass(Classroom.class);
+        verify(classroomRepository).save(captor.capture());
+        Classroom saved = captor.getValue();
+        assertThat(saved.getId(),       is("id_classroom"));
+        assertThat(saved.getTeachers(), hasSize(1));
+        assertThat(saved.getTeachers(), hasItem(new Teacher("id_teacher_2")));
+    }
+
+    @Test
+    public void should_delete_student_from_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setStudents(Sets.newLinkedHashSet(new Student("id_student_1"), new Student("id_student_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(delete(ClassroomController.URI + "/{id}/students/{idStudent}", "id_classroom", "id_student_1"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Classroom> captor = ArgumentCaptor.forClass(Classroom.class);
+        verify(classroomRepository).save(captor.capture());
+        Classroom saved = captor.getValue();
+        assertThat(saved.getId(),       is("id_classroom"));
+        assertThat(saved.getStudents(), hasSize(1));
+        assertThat(saved.getStudents(), hasItem(new Student("id_student_2")));
     }
 
 }

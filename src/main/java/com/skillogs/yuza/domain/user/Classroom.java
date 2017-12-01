@@ -94,4 +94,15 @@ public class Classroom {
     }
 
 
+    public void remove(Course course) {
+        this.courses.remove(course);
+    }
+
+    public void remove(Teacher teacher) {
+        this.teachers.remove(teacher);
+    }
+
+    public void remove(Student student) {
+        this.students.remove(student);
+    }
 }

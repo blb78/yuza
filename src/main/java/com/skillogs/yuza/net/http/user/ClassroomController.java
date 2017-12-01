@@ -67,7 +67,7 @@ public class ClassroomController {
             return ResponseEntity.notFound().build();
         }
 
-        Student student= userRepository.findOneStudent(idStudent);
+        Student student = userRepository.findOneStudent(idStudent);
         if (student == null) {
             return ResponseEntity.notFound().build();
         }
@@ -91,6 +91,42 @@ public class ClassroomController {
 
 
         classroom.add(course);
+        classroomRepository.save(classroom);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/courses/{idCourse}")
+    public ResponseEntity deleteCourse(@PathVariable String id, @PathVariable String idCourse) {
+        Classroom classroom = classroomRepository.findOne(id);
+        if (classroom == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        classroom.remove(new Course(idCourse));
+        classroomRepository.save(classroom);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/teachers/{idTeacher}")
+    public ResponseEntity deleteTeacher(@PathVariable String id, @PathVariable String idTeacher) {
+        Classroom classroom = classroomRepository.findOne(id);
+        if (classroom == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        classroom.remove(new Teacher(idTeacher));
+        classroomRepository.save(classroom);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/students/{idStudent}")
+    public ResponseEntity deleteStudent(@PathVariable String id, @PathVariable String idStudent) {
+        Classroom classroom = classroomRepository.findOne(id);
+        if (classroom == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        classroom.remove(new Student(idStudent));
         classroomRepository.save(classroom);
         return ResponseEntity.ok().build();
     }
