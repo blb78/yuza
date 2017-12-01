@@ -28,14 +28,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -203,6 +199,39 @@ public class ClassroomControllerTest {
         assertThat(saved.getId(),       is("id_classroom"));
         assertThat(saved.getStudents(), hasSize(1));
         assertThat(saved.getStudents(), hasItem(new Student("id_student_2")));
+    }
+
+    @Test
+    public void should_return_all_courses_for_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setCourses(Sets.newLinkedHashSet(new Course("id_course_1"), new Course("id_course_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(get(ClassroomController.URI + "/{id}/courses", "id_classroom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$..id", containsInAnyOrder("id_course_1", "id_course_2")));
+    }
+
+    @Test
+    public void should_return_all_teachers_for_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setTeachers(Sets.newLinkedHashSet(new Teacher("id_teacher_1"), new Teacher("id_teacher_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(get(ClassroomController.URI + "/{id}/teachers", "id_classroom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$..id", containsInAnyOrder("id_teacher_1", "id_teacher_2")));
+    }
+
+    @Test
+    public void should_return_all_students_for_classroom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setStudents(Sets.newLinkedHashSet(new Student("id_student_1"), new Student("id_student_2")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(get(ClassroomController.URI + "/{id}/students", "id_classroom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$..id", containsInAnyOrder("id_student_1", "id_student_2")));
     }
 
 }

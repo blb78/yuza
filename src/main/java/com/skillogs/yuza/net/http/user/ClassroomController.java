@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+
 @RestController
 @RequestMapping(ClassroomController.URI)
 public class ClassroomController {
@@ -129,5 +133,29 @@ public class ClassroomController {
         classroom.remove(new Student(idStudent));
         classroomRepository.save(classroom);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/courses")
+    public ResponseEntity<Set<Course>> getCourses(@PathVariable String id) {
+        return Optional.ofNullable(classroomRepository.findOne(id))
+                .map(Classroom::getCourses)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/teachers")
+    public ResponseEntity<Set<Teacher>> getTeachers(@PathVariable String id) {
+        return Optional.ofNullable(classroomRepository.findOne(id))
+                .map(Classroom::getTeachers)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/students")
+    public ResponseEntity<Set<Student>> getStudents(@PathVariable String id) {
+        return Optional.ofNullable(classroomRepository.findOne(id))
+                .map(Classroom::getStudents)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
