@@ -11,9 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @RestController
 @RequestMapping(ClassroomController.URI)
@@ -93,7 +94,6 @@ public class ClassroomController {
             course = courseRepository.create(new Course(idCourse));
         }
 
-
         classroom.add(course);
         classroomRepository.save(classroom);
         return ResponseEntity.ok().build();
@@ -101,60 +101,47 @@ public class ClassroomController {
 
     @DeleteMapping("/{id}/courses/{idCourse}")
     public ResponseEntity deleteCourse(@PathVariable String id, @PathVariable String idCourse) {
-        Classroom classroom = classroomRepository.findOne(id);
-        if (classroom == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        classroom.remove(new Course(idCourse));
-        classroomRepository.save(classroom);
-        return ResponseEntity.ok().build();
+        return deleteFromClassroom(id, classroom -> classroom.remove(new Course(idCourse)));
     }
 
     @DeleteMapping("/{id}/teachers/{idTeacher}")
     public ResponseEntity deleteTeacher(@PathVariable String id, @PathVariable String idTeacher) {
-        Classroom classroom = classroomRepository.findOne(id);
-        if (classroom == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        classroom.remove(new Teacher(idTeacher));
-        classroomRepository.save(classroom);
-        return ResponseEntity.ok().build();
+        return deleteFromClassroom(id, classroom -> classroom.remove(new Teacher(idTeacher)));
     }
 
     @DeleteMapping("/{id}/students/{idStudent}")
     public ResponseEntity deleteStudent(@PathVariable String id, @PathVariable String idStudent) {
+        return deleteFromClassroom(id, classroom -> classroom.remove(new Student(idStudent)));
+    }
+
+    private ResponseEntity deleteFromClassroom(String id, Consumer<Classroom> cons) {
         Classroom classroom = classroomRepository.findOne(id);
         if (classroom == null) {
             return ResponseEntity.notFound().build();
         }
-
-        classroom.remove(new Student(idStudent));
+        cons.accept(classroom);
         classroomRepository.save(classroom);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/courses")
     public ResponseEntity<Set<Course>> getCourses(@PathVariable String id) {
-        return Optional.ofNullable(classroomRepository.findOne(id))
-                .map(Classroom::getCourses)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return retrieveFromClassroom(id, Classroom::getCourses);
     }
 
     @GetMapping("/{id}/teachers")
     public ResponseEntity<Set<Teacher>> getTeachers(@PathVariable String id) {
-        return Optional.ofNullable(classroomRepository.findOne(id))
-                .map(Classroom::getTeachers)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return retrieveFromClassroom(id, Classroom::getTeachers);
     }
 
     @GetMapping("/{id}/students")
     public ResponseEntity<Set<Student>> getStudents(@PathVariable String id) {
+        return retrieveFromClassroom(id, Classroom::getStudents);
+    }
+
+    private <T> ResponseEntity<T> retrieveFromClassroom(@PathVariable String id, Function<Classroom, T> mapper) {
         return Optional.ofNullable(classroomRepository.findOne(id))
-                .map(Classroom::getStudents)
+                .map(mapper)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
