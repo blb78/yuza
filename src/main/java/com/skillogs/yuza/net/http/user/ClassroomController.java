@@ -48,6 +48,13 @@ public class ClassroomController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Classroom> getOne(@PathVariable String id) {
+        return Optional.ofNullable(classroomRepository.findOne(id))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}/teachers/{idTeacher}")
     public ResponseEntity addTeacher(@PathVariable String id, @PathVariable String idTeacher) {
         Classroom classroom = classroomRepository.findOne(id);

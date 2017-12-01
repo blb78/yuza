@@ -102,6 +102,22 @@ public class ClassroomControllerTest {
     }
 
     @Test
+    public void should_get_classrooom() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setStudents(Sets.newLinkedHashSet(new Student("id_student_1"), new Student("id_student_2")));
+        classroom.setCourses(Sets.newLinkedHashSet(new Course("id_course_1"), new Course("id_course_2"), new Course("id_course_3")));
+        classroom.setTeachers(Sets.newLinkedHashSet(new Teacher("id_teacher_1")));
+        when(classroomRepository.findOne("id_classroom")).thenReturn(classroom);
+
+        mvc.perform(get(ClassroomController.URI + "/{id}", "id_classroom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is("id_classroom")))
+                .andExpect(jsonPath("$.courses..id", containsInAnyOrder("id_course_1", "id_course_2", "id_course_3")))
+                .andExpect(jsonPath("$.students..id", containsInAnyOrder("id_student_1", "id_student_2")))
+                .andExpect(jsonPath("$.teachers..id", containsInAnyOrder("id_teacher_1")));
+    }
+
+    @Test
     public void should_add_student_to_classroom() throws Exception {
         when(classroomRepository.findOne("id_classroom")).thenReturn(new Classroom("id_classroom"));
         when(userRepository.findOneStudent("id_student")).thenReturn(new Student("id_student"));
