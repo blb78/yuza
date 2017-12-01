@@ -9,4 +9,7 @@ public interface UserRepository {
 
     void delete(Student student);
     void delete(Teacher teacher);
+
+    Student findOneStudent(String id);
+    Teacher findOneTeacher(String id);
 }
