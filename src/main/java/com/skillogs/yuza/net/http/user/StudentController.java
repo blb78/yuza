@@ -26,7 +26,7 @@ public class StudentController {
         this.classroomRepository = classroomRepository;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/courses")
     public ResponseEntity<Set<Course>> getFollowedCourses(@PathVariable String id) {
         return ResponseEntity.ok(classroomRepository.findByStudentId(id).stream()
                 .map(Classroom::getCourses)
