@@ -1,5 +1,6 @@
 package com.skillogs.yuza.config;
 
+import com.skillogs.yuza.net.http.account.AccountController;
 import com.skillogs.yuza.security.JWTConfigurer;
 import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring()
-                .antMatchers("/users/authenticate")
+                .antMatchers(AccountController.URI +"/authenticate")
                 .antMatchers("/v2/api-docs/**");
     }
 
