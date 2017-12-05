@@ -1,13 +1,15 @@
 package com.skillogs.yuza.repository;
 
-import com.skillogs.yuza.domain.User;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.skillogs.yuza.domain.user.Student;
+import com.skillogs.yuza.domain.user.Teacher;
 
+public interface UserRepository {
+    Teacher save(Teacher teacher );
+    Student save(Student student );
 
-public interface UserRepository  extends MongoRepository<User,String> {
+    void delete(Student student);
+    void delete(Teacher teacher);
 
-    long countByEmail(String email);
-    User findById(String id);
-    User findByEmailAndPassword(String email,String password);
-
+    Student findOneStudent(String id);
+    Teacher findOneTeacher(String id);
 }

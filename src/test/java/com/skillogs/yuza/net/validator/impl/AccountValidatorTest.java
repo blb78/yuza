@@ -1,11 +1,11 @@
 package com.skillogs.yuza.net.validator.impl;
 
-import com.skillogs.yuza.domain.Role;
-import com.skillogs.yuza.net.dto.UserDto;
+import com.skillogs.yuza.domain.account.Role;
+import com.skillogs.yuza.net.dto.AccountDto;
 import com.skillogs.yuza.net.exception.ValidationException;
 import com.skillogs.yuza.net.exception.ValidatorError;
 import com.skillogs.yuza.net.validator.Validator;
-import com.skillogs.yuza.repository.UserRepository;
+import com.skillogs.yuza.repository.AccountRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -21,14 +21,14 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
-public class UserValidatorTest {
-    private UserRepository repository;
-    private Validator<UserDto> validator;
+public class AccountValidatorTest {
+    private AccountRepository repository;
+    private Validator<AccountDto> validator;
 
     @Before
     public void setup() {
-        this.repository = Mockito.mock(UserRepository.class);
-        this.validator = new UserValidator(repository);
+        this.repository = Mockito.mock(AccountRepository.class);
+        this.validator = new AccountValidator(repository);
     }
 
     @After
@@ -38,20 +38,20 @@ public class UserValidatorTest {
 
     @Test
     public void failed_to_validate_new_empty_user() {
-        UserDto dto = build(UserDto::new);
+        AccountDto dto = build(AccountDto::new);
         try {
             validator.validate(dto);
             fail("Had to throw validation Exception, but got nothing");
         } catch (ValidationException ex) {
             List<ValidatorError> errors = ex.getErrors();
-            assertThat(extract(errors, ValidatorError::getField), Matchers.containsInAnyOrder("email", "firstName", "lastName", "roles", "password"));
+            assertThat(extract(errors, ValidatorError::getField), Matchers.containsInAnyOrder("email", "firstName", "lastName", "role", "password"));
             assertThat(extract(errors, ValidatorError::getMessage), Matchers.containsInAnyOrder("NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty", "NotEmpty"));
         }
     }
 
     @Test
     public void failed_to_validate_empty_user() {
-        UserDto dto = build(UserDto::new, u-> u.setId("id"));
+        AccountDto dto = build(AccountDto::new, u-> u.setId("id"));
         try {
             validator.validate(dto);
             fail("Had to throw validation Exception, but got nothing");
@@ -64,11 +64,11 @@ public class UserValidatorTest {
 
     @Test
     public void failed_to_validate_bad_email_format() {
-        UserDto dto = build(UserDto::new,
+        AccountDto dto = build(AccountDto::new,
                 u -> u.setId("id"),
                 u -> u.setFirstName("john"),
                 u -> u.setLastName("doe"),
-                u -> u.addRole(Role.ADMIN.name()),
+                u -> u.setRole(Role.ADMIN.name()),
                 u -> u.setEmail("bad email"));
         try {
             validator.validate(dto);
@@ -82,30 +82,29 @@ public class UserValidatorTest {
 
     @Test
     public void failed_to_validate_bad_role() {
-        UserDto dto = build(UserDto::new,
+        AccountDto dto = build(AccountDto::new,
                 u -> u.setFirstName("john"),
                 u -> u.setPassword("password"),
                 u -> u.setLastName("doe"),
-                u -> u.addRole(Role.ADMIN.name()),
-                u -> u.addRole("WIZZARD"),
+                u -> u.setRole("WIZZARD"),
                 u -> u.setEmail("email@server.com"));
         try {
             validator.validate(dto);
             fail("Had to throw validation Exception, but got nothing");
         } catch (ValidationException ex) {
             List<ValidatorError> errors = ex.getErrors();
-            assertThat(extract(errors, ValidatorError::getField), Matchers.containsInAnyOrder("roles"));
+            assertThat(extract(errors, ValidatorError::getField), Matchers.containsInAnyOrder("role"));
             assertThat(extract(errors, ValidatorError::getMessage), Matchers.containsInAnyOrder("Invalid"));
         }
     }
 
     @Test
     public void failed_to_validate_already_used_mail_for_new_user() {
-        UserDto dto = build(UserDto::new,
+        AccountDto dto = build(AccountDto::new,
                 u -> u.setFirstName("john"),
                 u -> u.setLastName("doe"),
                 u -> u.setPassword("password"),
-                u -> u.addRole(Role.ADMIN.name()),
+                u -> u.setRole(Role.ADMIN.name()),
                 u -> u.setEmail("already@used.email"));
         when(repository.countByEmail(dto.getEmail())).thenReturn(1L);
 
@@ -121,12 +120,12 @@ public class UserValidatorTest {
 
     @Test
     public void should_validate_user_with_same_email() {
-        UserDto dto = build(UserDto::new,
+        AccountDto dto = build(AccountDto::new,
                 u -> u.setId("id"),
                 u -> u.setLastName("doe"),
                 u -> u.setFirstName("john"),
                 u -> u.setPassword("password"),
-                u -> u.addRole(Role.ADMIN.name()),
+                u -> u.setRole(Role.ADMIN.name()),
                 u -> u.setEmail("john@doe.email"));
         when(repository.countByEmail(dto.getEmail())).thenReturn(1L);
 

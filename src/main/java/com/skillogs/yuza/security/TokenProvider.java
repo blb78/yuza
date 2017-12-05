@@ -6,7 +6,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.skillogs.yuza.domain.User;
+import com.skillogs.yuza.domain.account.Account;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +29,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -54,9 +55,9 @@ public class TokenProvider implements TokenAuthenticationService {
     public Authentication getAuthentication(HttpServletRequest req) {
         DecodedJWT token = isValid(req.getHeader(AUTHORISATION_HEADER));
         if (token== null) return null;
-        List<SimpleGrantedAuthority> authorities = token.getClaim("roles").asList(SimpleGrantedAuthority.class);
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(token.getClaim("role").as(SimpleGrantedAuthority.class));
 
-        User principal = new User(token.getClaim("email").asString());
+        Account principal = new Account(token.getClaim("email").asString());
         principal.setId(token.getClaim("iss").asString());
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
