@@ -68,8 +68,6 @@ public class AccountController {
             case STUDENT:
                 userRepository.save(new Student(account.getId()));
                 break;
-                default:
-                    throw new RuntimeException("Cannot create User for Role "+ account.getRole());
         }
     }
 
@@ -126,8 +124,6 @@ public class AccountController {
             case STUDENT:
                 userRepository.delete(new Student(account.getId()));
                 break;
-            default:
-                throw new RuntimeException("Cannot create User for Role "+ account.getRole());
         }
     }
 
