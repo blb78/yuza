@@ -30,7 +30,6 @@ public class Account {
         // NOTE : for bean convention
     }
 
-
     public String getId() {
         return id;
     }

@@ -47,4 +47,15 @@ public class ClassroomRepositoryImpl implements ClassroomRepository {
     public Set<Classroom> findByStudentId(String idStudent) {
         return Sets.newHashSet(mgo.find(Query.query(Criteria.where("students._id").is(idStudent)), Classroom.class));
     }
+
+    @Override
+    public Set<Classroom> findAll() {
+        return Sets.newHashSet(mgo.findAll(Classroom.class));
+    }
+
+    @Override
+    public Set<Classroom> findAll(String idTeacher) {
+        return Sets.newHashSet(mgo.find(Query.query(Criteria.where("teachers._id").is(idTeacher)), Classroom.class));
+    }
+
 }

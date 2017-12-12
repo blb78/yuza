@@ -44,7 +44,7 @@ public class AccountController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('INSTRUCTOR','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TEACHER','ADMIN')")
     public Page<AccountDto> findAll(Pageable pageable){
         return repository.findAll(pageable).map(mapper::toDTO);
     }

@@ -1,6 +1,7 @@
 package com.skillogs.yuza.net.http.user;
 
 import com.skillogs.yuza.domain.Course;
+import com.skillogs.yuza.domain.account.Account;
 import com.skillogs.yuza.domain.user.Classroom;
 import com.skillogs.yuza.domain.user.Student;
 import com.skillogs.yuza.domain.user.Teacher;
@@ -8,7 +9,10 @@ import com.skillogs.yuza.repository.ClassroomRepository;
 import com.skillogs.yuza.repository.CourseRepository;
 import com.skillogs.yuza.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -32,6 +36,19 @@ public class ClassroomController {
         this.classroomRepository = classroomRepository;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('TEACHER','ADMIN')")
+    public ResponseEntity<Set<Classroom>> findAll(@AuthenticationPrincipal Account authenticated){
+        switch (authenticated.getRole()){
+            case ADMIN:
+                return ResponseEntity.ok(classroomRepository.findAll());
+            case TEACHER:
+                return ResponseEntity.ok(classroomRepository.findAll(authenticated.getId()));
+            default:
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     @PostMapping
