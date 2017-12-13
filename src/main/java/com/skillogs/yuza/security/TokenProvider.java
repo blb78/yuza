@@ -7,6 +7,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.skillogs.yuza.domain.account.Account;
+import com.skillogs.yuza.domain.account.Role;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ public class TokenProvider implements TokenAuthenticationService {
 
         Account principal = new Account(token.getClaim("email").asString());
         principal.setId(token.getClaim("iss").asString());
+        principal.setRole(Role.valueOf(token.getClaim("role").asString()));
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }

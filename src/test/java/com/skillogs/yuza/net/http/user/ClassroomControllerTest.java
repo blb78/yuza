@@ -3,6 +3,8 @@ package com.skillogs.yuza.net.http.user;
 import com.skillogs.yuza.config.SecurityConfiguration;
 import com.skillogs.yuza.config.WebConfiguration;
 import com.skillogs.yuza.domain.Course;
+import com.skillogs.yuza.domain.account.Account;
+import com.skillogs.yuza.domain.account.Role;
 import com.skillogs.yuza.domain.user.Classroom;
 import com.skillogs.yuza.domain.user.Student;
 import com.skillogs.yuza.domain.user.Teacher;
@@ -11,7 +13,6 @@ import com.skillogs.yuza.repository.CourseRepository;
 import com.skillogs.yuza.repository.UserRepository;
 import com.skillogs.yuza.security.TokenAuthenticationService;
 import org.assertj.core.util.Sets;
-import org.bouncycastle.jcajce.provider.symmetric.TEA;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,9 +50,57 @@ public class ClassroomControllerTest {
 
     @Before
     public void setup() {
+        Account account = new Account("test@email.com");
+        account.setRole(Role.ADMIN);
         when(tkpv.getAuthentication(Mockito.any()))
-                .thenReturn(new TestingAuthenticationToken("aze@aze.fr", null, "ADMIN"));
+                .thenReturn(new TestingAuthenticationToken(account, null, "ADMIN"));
     }
+
+    @Test
+    public void should_get_classrooms() throws Exception {
+        Account account = new Account("test@email.com");
+        account.setRole(Role.ADMIN);
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken(account, null, account.getRole().name()));
+        when(classroomRepository.findAll())
+                .thenReturn(Sets.newLinkedHashSet(new Classroom("id_classroom")));
+
+        mvc.perform(get(ClassroomController.URI))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id", is("id_classroom")));
+    }
+    @Test
+    public void failed_get_classrooms() throws Exception {
+
+        Account account = new Account("test@email.com");
+        account.setRole(Role.STUDENT);
+        account.setId("id_student_1");
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken(account, null, account.getRole().name()));
+
+        mvc.perform(get(ClassroomController.URI))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void should_get_teacher_classrooms() throws Exception {
+        Classroom classroom = new Classroom("id_classroom");
+        classroom.setTeachers(Sets.newLinkedHashSet(new Teacher("id_teacher_1")));
+        when(classroomRepository.findAll("id_teacher_1"))
+                .thenReturn(Sets.newLinkedHashSet(classroom));
+        Account account = new Account("test@email.com");
+        account.setRole(Role.TEACHER);
+        account.setId("id_teacher_1");
+        when(tkpv.getAuthentication(Mockito.any()))
+                .thenReturn(new TestingAuthenticationToken(account, null, account.getRole().name()));
+
+        mvc.perform(get(ClassroomController.URI))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id", is("id_classroom")));
+    }
+
 
     @Test
     public void should_create_classroom() throws Exception {

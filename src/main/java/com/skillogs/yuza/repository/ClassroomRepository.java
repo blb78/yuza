@@ -12,4 +12,8 @@ public interface ClassroomRepository {
     Classroom save(Classroom classroom);
 
     Set<Classroom> findByStudentId(String idStudent);
+
+
+    Set<Classroom> findAll();
+    Set<Classroom> findAll(String idTeacher);
 }
