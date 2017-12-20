@@ -1,6 +1,5 @@
 package com.skillogs.yuza.net.http;
 
-import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
