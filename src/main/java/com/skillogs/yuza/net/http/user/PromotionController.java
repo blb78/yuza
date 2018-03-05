@@ -104,15 +104,15 @@ public class PromotionController {
 
     @DeleteMapping("/{id}/teachers/{idTeacher}")
     public ResponseEntity deleteTeacher(@PathVariable String id, @PathVariable String idTeacher) {
-        return deleteFromClassroom(id, promotion -> promotion.remove(new Teacher(idTeacher)));
+        return deleteFromPromotion(id, promotion -> promotion.remove(new Teacher(idTeacher)));
     }
 
     @DeleteMapping("/{id}/students/{idStudent}")
     public ResponseEntity deleteStudent(@PathVariable String id, @PathVariable String idStudent) {
-        return deleteFromClassroom(id, promotion -> promotion.remove(new Student(idStudent)));
+        return deleteFromPromotion(id, promotion -> promotion.remove(new Student(idStudent)));
     }
 
-    private ResponseEntity deleteFromClassroom(String id, Consumer<Promotion> cons) {
+    private ResponseEntity deleteFromPromotion(String id, Consumer<Promotion> cons) {
         Promotion promotion = promotionRepository.findOne(id);
         if (promotion == null) {
             return ResponseEntity.notFound().build();
