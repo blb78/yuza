@@ -1,6 +1,5 @@
 package com.skillogs.yuza.domain.user;
 
-import com.skillogs.yuza.domain.Course;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -8,30 +7,26 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Document
-public class Classroom {
+public class Promotion {
 
     @Id
     private String id;
     private String name;
     private Set<Teacher> teachers = new HashSet<>();
     private Set<Student> students = new HashSet<>();
-    private Set<Course> courses = new HashSet<>();
+    private Cursus cursus;
 
-    public Classroom(String id) {
+    public Promotion(String id) {
         this.id = id;
     }
 
-    public Classroom() {
+    public Promotion() {
         // NOTE: for bean convention
     }
 
 
     public void add(Student student) {
         this.students.add(student);
-    }
-
-    public void add(Course course) {
-        this.courses.add(course);
     }
 
     public void add(Teacher teacher) {
@@ -51,9 +46,9 @@ public class Classroom {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Classroom classroom = (Classroom) o;
+        Promotion promotion = (Promotion) o;
 
-        return id != null ? id.equals(classroom.id) : classroom.id == null;
+        return id != null ? id.equals(promotion.id) : promotion.id == null;
     }
 
     @Override
@@ -85,24 +80,19 @@ public class Classroom {
         this.students = students;
     }
 
-    public Set<Course> getCourses() {
-        return courses;
-    }
-
-    public void setCourses(Set<Course> courses) {
-        this.courses = courses;
-    }
-
-
-    public void remove(Course course) {
-        this.courses.remove(course);
-    }
-
     public void remove(Teacher teacher) {
         this.teachers.remove(teacher);
     }
 
     public void remove(Student student) {
         this.students.remove(student);
+    }
+
+    public Cursus getCursus() {
+        return cursus;
+    }
+
+    public void setCursus(Cursus cursus) {
+        this.cursus = cursus;
     }
 }
