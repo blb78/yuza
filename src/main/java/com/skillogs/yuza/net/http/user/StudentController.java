@@ -1,9 +1,9 @@
 package com.skillogs.yuza.net.http.user;
 
-import com.skillogs.yuza.domain.Course;
 import com.skillogs.yuza.domain.account.Account;
-import com.skillogs.yuza.domain.user.Classroom;
-import com.skillogs.yuza.repository.ClassroomRepository;
+import com.skillogs.yuza.domain.user.Cursus;
+import com.skillogs.yuza.domain.user.Promotion;
+import com.skillogs.yuza.repository.PromotionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,28 +22,26 @@ import java.util.stream.Collectors;
 public class StudentController {
     public static final String URI = "/students";
 
-    private final ClassroomRepository classroomRepository;
+    private final PromotionRepository promotionRepository;
 
     @Autowired
-    public StudentController(ClassroomRepository classroomRepository) {
-        this.classroomRepository = classroomRepository;
+    public StudentController(PromotionRepository promotionRepository) {
+        this.promotionRepository = promotionRepository;
     }
 
-    @GetMapping("/{id}/courses")
+    @GetMapping("/{id}/cursus")
     @PreAuthorize("hasAnyAuthority('STUDENT', 'TEACHER', 'ADMIN')")
-    public ResponseEntity<Set<Course>> getFollowedCourses(@PathVariable String id) {
-        return ResponseEntity.ok(classroomRepository.findByStudentId(id).stream()
-                .map(Classroom::getCourses)
-                .flatMap(Collection::stream)
+    public ResponseEntity<Set<Cursus>> getFollowedCursus(@PathVariable String id) {
+        return ResponseEntity.ok(promotionRepository.findByStudentId(id).stream()
+                .map(Promotion::getCursus)
                 .collect(Collectors.toSet()));
     }
 
-    @GetMapping("/me/courses")
+    @GetMapping("/me/cursus")
     @PreAuthorize("hasAuthority('STUDENT')")
-    public ResponseEntity<Set<Course>> getFollowedCourses(@AuthenticationPrincipal Account account) {
-        return ResponseEntity.ok(classroomRepository.findByStudentId(account.getId()).stream()
-                .map(Classroom::getCourses)
-                .flatMap(Collection::stream)
+    public ResponseEntity<Set<Cursus>> getFollowedCourses(@AuthenticationPrincipal Account account) {
+        return ResponseEntity.ok(promotionRepository.findByStudentId(account.getId()).stream()
+                .map(Promotion::getCursus)
                 .collect(Collectors.toSet()));
     }
 }
