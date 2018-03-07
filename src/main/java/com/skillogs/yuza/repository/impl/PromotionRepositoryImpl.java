@@ -55,6 +55,12 @@ public class PromotionRepositoryImpl implements PromotionRepository {
     }
 
     @Override
+    public Set<Promotion> findByTeacherId(String idTeacher) {
+        List<Promotion> elements = mgo.find(query(where("teachers.id").is(new ObjectId(idTeacher))), Promotion.class);
+        return Sets.newHashSet(elements);
+    }
+
+    @Override
     public Set<Promotion> findAll() {
         return Sets.newHashSet(mgo.findAll(Promotion.class));
     }
