@@ -1,6 +1,11 @@
 package com.skillogs.yuza.domain.user;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document
 public class Cursus {
+    @Id
     private String id;
 
     public Cursus(String id) {
