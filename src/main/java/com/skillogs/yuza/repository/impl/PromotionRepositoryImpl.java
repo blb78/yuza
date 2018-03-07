@@ -3,13 +3,18 @@ package com.skillogs.yuza.repository.impl;
 import com.google.common.collect.Sets;
 import com.skillogs.yuza.domain.user.Promotion;
 import com.skillogs.yuza.repository.PromotionRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Repository
 public class PromotionRepositoryImpl implements PromotionRepository {
@@ -34,7 +39,7 @@ public class PromotionRepositoryImpl implements PromotionRepository {
 
     @Override
     public Promotion findOne(String id) {
-        return mgo.findOne(Query.query(Criteria.where("id").is(id)), Promotion.class);
+        return mgo.findOne(query(where("id").is(id)), Promotion.class);
     }
 
     @Override
@@ -45,7 +50,8 @@ public class PromotionRepositoryImpl implements PromotionRepository {
 
     @Override
     public Set<Promotion> findByStudentId(String idStudent) {
-        return Sets.newHashSet(mgo.find(Query.query(Criteria.where("students._id").is(idStudent)), Promotion.class));
+        List<Promotion> elements = mgo.find(query(where("students.id").is(new ObjectId(idStudent))), Promotion.class);
+        return Sets.newHashSet(elements);
     }
 
     @Override
@@ -55,7 +61,7 @@ public class PromotionRepositoryImpl implements PromotionRepository {
 
     @Override
     public Set<Promotion> findAll(String idTeacher) {
-        return Sets.newHashSet(mgo.find(Query.query(Criteria.where("teachers._id").is(idTeacher)), Promotion.class));
+        return Sets.newHashSet(mgo.find(query(where("teachers._id").is(new ObjectId(idTeacher))), Promotion.class));
     }
 
 }

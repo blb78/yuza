@@ -59,7 +59,7 @@ public class TokenProvider implements TokenAuthenticationService {
         List<SimpleGrantedAuthority> authorities = Collections.singletonList(token.getClaim("role").as(SimpleGrantedAuthority.class));
 
         Account principal = new Account(token.getClaim("email").asString());
-        principal.setId(token.getClaim("iss").asString());
+        principal.setId(token.getClaim("sub").asString());
         principal.setRole(Role.valueOf(token.getClaim("role").asString()));
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
