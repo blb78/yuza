@@ -12,8 +12,10 @@ public interface PromotionRepository {
     Promotion save(Promotion promotion);
 
     Set<Promotion> findByStudentId(String idStudent);
+    Set<Promotion> findByTeacherId(String idTeacher);
 
 
     Set<Promotion> findAll();
     Set<Promotion> findAll(String idTeacher);
+
 }
