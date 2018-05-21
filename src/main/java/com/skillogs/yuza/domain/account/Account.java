@@ -1,35 +1,39 @@
-package com.skillogs.yuza.net.http;
+package com.skillogs.yuza.domain.account;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public class UserDto {
+
+@Document
+public class Account {
     @Id
     private String id;
     private String email;
-    @JsonIgnore
     private String password;
     private String firstName;
     private String lastName;
     private String city;
     private String country;
+    private Role role;
     private long birthday;
-    @JsonIgnore
     private String picture;
-    @JsonIgnore
     private boolean enabled = true;
-    @JsonIgnore
     private boolean locked = false;
-    @JsonIgnore
     private long createdAt  = System.currentTimeMillis();
+
+    public Account(String email) {
+        this.email = email;
+    }
+
+    public Account() {
+        // NOTE : for bean convention
+    }
 
     public String getId() {
         return id;
     }
-
-    public void setId(String id) {
-        this.id = id;
-    }
+    public void setId(String id) {this.id = id; }
 
     public String getEmail() {
         return email;
@@ -63,30 +67,6 @@ public class UserDto {
         this.lastName = lastName;
     }
 
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public long getBirthday() {
-        return birthday;
-    }
-
-    public void setBirthday(long birthday) {
-        this.birthday = birthday;
-    }
-
     public String getPicture() {
         return picture;
     }
@@ -117,5 +97,65 @@ public class UserDto {
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public long getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(long birthday) {
+        this.birthday = birthday;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "id=" + id +
+                ", email=" + email +
+                ", firstName=" + firstName +
+                ", lastName=" + lastName +
+                ", birthday=" + lastName +
+                ", city=" + city +
+                ", country=" + country +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Account account = (Account) o;
+
+        return email.equals(account.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return email.hashCode();
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

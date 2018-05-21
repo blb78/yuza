@@ -17,6 +17,7 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <java-jwt.version>3.2.0</java-jwt.version>
         <maven.jar.plugin.version>3.0.2</maven.jar.plugin.version>
         <org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
     </properties>
@@ -35,11 +36,24 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <!--Utils
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.7.0</version>
+            <exclusions> <!-- Why : http://mapstruct.org/faq/#Why-do-I-get-this-error-Could-not-retrieve-Mapper-annotation-during-compilation -->
+                <exclusion>
+                    <groupId>org.mapstruct</groupId>
+                    <artifactId>mapstruct</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -47,21 +61,27 @@
         </dependency>
 
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId> <!-- use mapstruct-jdk8 for Java 8 or higher -->
+            <artifactId>mapstruct-jdk8</artifactId> <!-- use mapstruct-jdk8 for Java 8 or higher -->
             <version>${org.mapstruct.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${java-jwt.version}</version>
+        </dependency>
         <!--Tests
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -84,8 +104,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
-                    <source>1.6</source> <!-- or higher, depending on your project -->
-                    <target>1.6</target> <!-- or higher, depending on your project -->
+                    <source>1.8</source> <!-- or higher, depending on your project -->
+                    <target>1.8</target> <!-- or higher, depending on your project -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.mapstruct</groupId>
@@ -97,7 +117,6 @@
             </plugin>
         </plugins>
     </build>
-
 
 
 </project>

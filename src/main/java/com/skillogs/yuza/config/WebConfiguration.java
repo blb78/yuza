@@ -1,35 +1,26 @@
 package com.skillogs.yuza.config;
 
-import ch.qos.logback.access.tomcat.LogbackValve;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
+import com.skillogs.yuza.net.http.ValveFilter;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import javax.servlet.Filter;
+import javax.servlet.DispatcherType;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import java.util.EnumSet;
 
 import static java.util.Arrays.asList;
 
 @Configuration
-public class WebConfiguration {
-    @Bean
-    public EmbeddedServletContainerFactory servletContainer() {
-        TomcatEmbeddedServletContainerFactory tomcat = new TomcatEmbeddedServletContainerFactory();
-
-        LogbackValve logbackValve = new LogbackValve();
-
-        // point to logback-access.xml
-        logbackValve.setFilename("logback-access.xml");
-
-        tomcat.addContextValves(logbackValve);
-
-        return tomcat;
-    }
+public class WebConfiguration extends WebMvcConfigurerAdapter implements ServletContextInitializer {
 
     @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
@@ -38,12 +29,8 @@ public class WebConfiguration {
         return builder;
     }
 
-    @Bean(name = "TeeFilter")
-    public Filter teeFilter() {
-        return new ch.qos.logback.access.servlet.TeeFilter();
-    }
-
     @Bean
+    @Profile("local")
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("*");
@@ -55,4 +42,13 @@ public class WebConfiguration {
         return new CorsFilter(source);
     }
 
+    @Override
+    public void onStartup(ServletContext servletContext) throws ServletException {
+        servletContext
+                .addFilter("valveFilter", new ValveFilter())
+                .addMappingForUrlPatterns(
+                        EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.ERROR),
+                        true,
+                        "/*");
+    }
 }
