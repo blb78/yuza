@@ -72,7 +72,7 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TEACHER','ADMIN')")
     public ResponseEntity<AccountDto> findOne(@PathVariable String id)  {
         return Optional.ofNullable(repository.findById(id))
                 .map(mapper::toDTO)
